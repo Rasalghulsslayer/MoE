@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+profile.txt
+data/raw/*
+!data/raw/metadata.json
+data/splits/

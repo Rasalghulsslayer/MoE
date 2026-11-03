@@ -1,0 +1,87 @@
+{
+  "dataset": "OpenLLM-France/Lucie-Training-Dataset",
+  "revision": "v1.2",
+  "downloaded_at": "2026-10-29T18:27:52.835528+00:00",
+  "sources": [
+    {
+      "config": "RedPajama-fr",
+      "budget": 560000000,
+      "docs": 86540,
+      "bytes": 560006672,
+      "skipped": 0,
+      "shards": 6
+    },
+    {
+      "config": "Wikipedia-fr",
+      "budget": 80000000,
+      "docs": 47307,
+      "bytes": 80001645,
+      "skipped": 0,
+      "shards": 1
+    },
+    {
+      "config": "GallicaPress",
+      "budget": 40000000,
+      "docs": 295,
+      "bytes": 40594984,
+      "skipped": 0,
+      "shards": 1
+    },
+    {
+      "config": "GallicaMonographies",
+      "budget": 20000000,
+      "docs": 102,
+      "bytes": 20031882,
+      "skipped": 0,
+      "shards": 1
+    },
+    {
+      "config": "Gutenberg-fr",
+      "budget": 20000000,
+      "docs": 55,
+      "bytes": 20278663,
+      "skipped": 0,
+      "shards": 1
+    },
+    {
+      "config": "HAL",
+      "budget": 20000000,
+      "docs": 193,
+      "bytes": 20063527,
+      "skipped": 0,
+      "shards": 1
+    },
+    {
+      "config": "Theses",
+      "budget": 20000000,
+      "docs": 52,
+      "bytes": 20039620,
+      "skipped": 0,
+      "shards": 1
+    },
+    {
+      "config": "Claire-fr",
+      "budget": 20000000,
+      "docs": 252,
+      "bytes": 20126411,
+      "skipped": 0,
+      "shards": 1
+    },
+    {
+      "config": "InterventionsParlement",
+      "budget": 20000000,
+      "docs": 49583,
+      "bytes": 20000173,
+      "skipped": 0,
+      "shards": 1
+    },
+    {
+      "config": "code-python",
+      "budget": 200000000,
+      "docs": 37705,
+      "bytes": 200016386,
+      "skipped": 0,
+      "shards": 2
+    }
+  ]
+}
