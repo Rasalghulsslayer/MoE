@@ -1,0 +1,41 @@
+{
+  "tokenizer": "artifacts/tokenizer/fr_code_32k.json",
+  "splits": [
+    {
+      "split": "val_fr",
+      "docs": 1722,
+      "tokens": 2094623,
+      "bytes_per_token": 4.167
+    },
+    {
+      "split": "val_code",
+      "docs": 377,
+      "tokens": 472938,
+      "bytes_per_token": 3.584
+    },
+    {
+      "split": "test_fr",
+      "docs": 1722,
+      "tokens": 2047569,
+      "bytes_per_token": 4.085
+    },
+    {
+      "split": "test_code",
+      "docs": 377,
+      "tokens": 509641,
+      "bytes_per_token": 3.659
+    },
+    {
+      "split": "train_fr",
+      "docs": 168672,
+      "tokens": 190285912,
+      "bytes_per_token": 4.126
+    },
+    {
+      "split": "train_code",
+      "docs": 36951,
+      "tokens": 58042961,
+      "bytes_per_token": 3.389
+    }
+  ]
+}

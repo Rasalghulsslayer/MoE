@@ -1,6 +1,6 @@
 #Essayons notre tokenizer sur des données réelles
 from pathlib import Path
-from tokenizer.tokenizer import get_stats, merge, train, build_vocab, encode, decode, train_reg
+from tokenizer.tokenizer import get_stats, merge, train, build_vocab, encode_chunks, decode, train_reg
 from tokenizer.tries.try_regex import GPT4_PATTERN
 from tokenizer.the_regex import REGEX_PATTERN
 import time
@@ -65,19 +65,19 @@ if __name__ == "__main__":
 
     print("Encodage des échantillons...")
     # Encodage des échantillons avec les merges appris pour la version classique
-    classic_encoded_train_sample = encode(train_sample, merges_classic)
-    classic_encoded_val_sample_fr = encode(val_sample_fr, merges_classic)
-    classic_encoded_val_sample_code = encode(val_sample_code, merges_classic)
+    classic_encode_chunksd_train_sample = encode_chunks(train_sample, merges_classic)
+    classic_encode_chunksd_val_sample_fr = encode_chunks(val_sample_fr, merges_classic)
+    classic_encode_chunksd_val_sample_code = encode_chunks(val_sample_code, merges_classic)
 
     # Encodage des échantillons avec les merges appris pour la version gpt
-    gpt_encoded_train_sample = encode(train_sample, merges_gpt)
-    gpt_encoded_val_sample_fr = encode(val_sample_fr, merges_gpt)
-    gpt_encoded_val_sample_code = encode(val_sample_code, merges_gpt)
+    gpt_encode_chunksd_train_sample = encode_chunks(train_sample, merges_gpt)
+    gpt_encode_chunksd_val_sample_fr = encode_chunks(val_sample_fr, merges_gpt)
+    gpt_encode_chunksd_val_sample_code = encode_chunks(val_sample_code, merges_gpt)
 
     # Encodage des échantillons avec les merges appris pour la version regex
-    regex_encoded_train_sample = encode(train_sample, merges_regex)
-    regex_encoded_val_sample_fr = encode(val_sample_fr, merges_regex)
-    regex_encoded_val_sample_code = encode(val_sample_code, merges_regex)
+    regex_encode_chunksd_train_sample = encode_chunks(train_sample, merges_regex)
+    regex_encode_chunksd_val_sample_fr = encode_chunks(val_sample_fr, merges_regex)
+    regex_encode_chunksd_val_sample_code = encode_chunks(val_sample_code, merges_regex)
     print("Encodage terminé !")
     print("\n")
 
@@ -87,25 +87,25 @@ if __name__ == "__main__":
     print("--- Version classique (sans regex) ---")
 
     print("-train-")
-    n_1 = len(train_sample.encode('utf-8'))
+    n_1 = len(train_sample.encode_chunks('utf-8'))
     print(f"Taille avant compression : {n_1}")
-    n_2 = len(classic_encoded_train_sample)
+    n_2 = len(classic_encode_chunksd_train_sample)
     print(f"Taille après compression : {n_2}")
     r = n_1 / n_2
     print(f"Ratio : {r}")
 
     print("-val_fr-")
-    n_1 = len(val_sample_fr.encode('utf-8'))
+    n_1 = len(val_sample_fr.encode_chunks('utf-8'))
     print(f"Taille avant compression : {n_1}")
-    n_2 = len(classic_encoded_val_sample_fr)
+    n_2 = len(classic_encode_chunksd_val_sample_fr)
     print(f"Taille après compression : {n_2}")
     r = n_1 / n_2
     print(f"Ratio : {r}")
 
     print("-val_code-")
-    n_1 = len(val_sample_code.encode('utf-8'))
+    n_1 = len(val_sample_code.encode_chunks('utf-8'))
     print(f"Taille avant compression : {n_1}")
-    n_2 = len(classic_encoded_val_sample_code)
+    n_2 = len(classic_encode_chunksd_val_sample_code)
     print(f"Taille après compression : {n_2}")
     r = n_1 / n_2
     print(f"Ratio : {r}")
@@ -115,25 +115,25 @@ if __name__ == "__main__":
     print("--- Version regex avec GPT4_PATTERN ---")
 
     print("-train-")
-    n_1 = len(train_sample.encode('utf-8'))
+    n_1 = len(train_sample.encode_chunks('utf-8'))
     print(f"Taille avant compression : {n_1}")
-    n_2 = len(gpt_encoded_train_sample)
+    n_2 = len(gpt_encode_chunksd_train_sample)
     print(f"Taille après compression : {n_2}")
     r = n_1 / n_2
     print(f"Ratio : {r}")
 
     print("-val_fr-")
-    n_1 = len(val_sample_fr.encode('utf-8'))
+    n_1 = len(val_sample_fr.encode_chunks('utf-8'))
     print(f"Taille avant compression : {n_1}")
-    n_2 = len(gpt_encoded_val_sample_fr)
+    n_2 = len(gpt_encode_chunksd_val_sample_fr)
     print(f"Taille après compression : {n_2}")
     r = n_1 / n_2
     print(f"Ratio : {r}")
 
     print("-val_code-")
-    n_1 = len(val_sample_code.encode('utf-8'))
+    n_1 = len(val_sample_code.encode_chunks('utf-8'))
     print(f"Taille avant compression : {n_1}")
-    n_2 = len(gpt_encoded_val_sample_code)
+    n_2 = len(gpt_encode_chunksd_val_sample_code)
     print(f"Taille après compression : {n_2}")
     r = n_1 / n_2
     print(f"Ratio : {r}")
@@ -143,25 +143,25 @@ if __name__ == "__main__":
     print("--- Version regex avec REGEX_PATTERN ---")
     
     print("-train-")
-    n_1 = len(train_sample.encode('utf-8'))
+    n_1 = len(train_sample.encode_chunks('utf-8'))
     print(f"Taille avant compression : {n_1}")
-    n_2 = len(regex_encoded_train_sample)
+    n_2 = len(regex_encode_chunksd_train_sample)
     print(f"Taille après compression : {n_2}")
     r = n_1 / n_2
     print(f"Ratio : {r}")
 
     print("-val_fr-")
-    n_1 = len(val_sample_fr.encode('utf-8'))
+    n_1 = len(val_sample_fr.encode_chunks('utf-8'))
     print(f"Taille avant compression : {n_1}")
-    n_2 = len(regex_encoded_val_sample_fr)
+    n_2 = len(regex_encode_chunksd_val_sample_fr)
     print(f"Taille après compression : {n_2}")
     r = n_1 / n_2
     print(f"Ratio : {r}")
 
     print("-val_code-")
-    n_1 = len(val_sample_code.encode('utf-8'))
+    n_1 = len(val_sample_code.encode_chunks('utf-8'))
     print(f"Taille avant compression : {n_1}")
-    n_2 = len(regex_encoded_val_sample_code)
+    n_2 = len(regex_encode_chunksd_val_sample_code)
     print(f"Taille après compression : {n_2}")
     r = n_1 / n_2
     print(f"Ratio : {r}")

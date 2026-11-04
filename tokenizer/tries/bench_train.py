@@ -1,6 +1,6 @@
 #Testons les durées d'entraînement pour différentes tailles de données.
 from pathlib import Path
-from tokenizer.tokenizer import get_stats, merge, train, build_vocab, encode, decode, train_reg
+from tokenizer.tokenizer import train_reg
 from tokenizer.tries.try_regex import GPT4_PATTERN
 from tokenizer.the_regex import REGEX_PATTERN
 from utils.runtime import mem_mo

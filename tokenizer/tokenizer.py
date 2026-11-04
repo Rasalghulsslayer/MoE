@@ -79,7 +79,7 @@ def train_reference(text: str, vocab_size: int, pattern=REGEX_PATTERN) -> dict[t
 
 
 def train_from_counts(counts, vocab_size):
-    """Pour l'instant je ne sais pas."""
+    """Entrainement optimisé"""
     words = [list(chunk.encode('utf-8')) for chunk in counts]
     freqs = list(counts.values())
     stats = Counter()
@@ -96,7 +96,7 @@ def train_from_counts(counts, vocab_size):
         new_id = 256 + i
         if not stats:
             break
-        pair = max(stats, key=lambda p: (stats[p], -p[0], -p[1])) #pair = max(stats, key=stats.get) version non optimisée
+        pair = max(stats, key=lambda p: (stats[p], -p[0], -p[1]))
         for j in where.pop(pair):
             for remove_pair in zip(words[j], words[j][1:]):
                 stats[remove_pair] -= freqs[j]
@@ -124,7 +124,7 @@ def train_reg(text: str, vocab_size: int, pattern=REGEX_PATTERN) -> dict[tuple[i
 
 
 def count_chunks(path, pattern=REGEX_PATTERN, keep_every = 20) -> Counter:
-    """Pareil je ne saurais pas trop dire."""
+    """Sélection des documents et extraction des chunks."""
     counts = Counter()
     with open(path, encoding='utf-8') as f:
         for i, line in enumerate(f):
@@ -158,8 +158,8 @@ def decode(ids: list[int], vocab: dict[int, bytes]) -> str:
     return output_s
 
 
-def encode(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
-    """Transforme le texte en liste d'indices."""
+def encode_chunks(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
+    """Encode pour les chunks."""
     ids = list(text.encode('utf-8'))
     while len(ids) >= 2:
         stats = get_stats(ids)
@@ -170,23 +170,27 @@ def encode(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
     return ids
 
 
-def encode_chunks(text: str, merges: dict[tuple[int, int], int], pattern=REGEX_PATTERN) -> list[int]:
-    """Encode pour les chunks."""
+def encode(text: str, merges: dict[tuple[int, int], int], pattern=REGEX_PATTERN, cache=None) -> list[int]:
+    """Transforme le texte en liste d'indices, avec cache pour optimiser les passes."""
     ids = []
     chunks = pretokenize(text, pattern)
     for chunk in chunks:
-        id = encode(chunk, merges)
+        if cache is not None and chunk in cache:
+            ids += cache[chunk]
+            continue
+        id = encode_chunks(chunk, merges)
+        if cache is not None:
+            cache[chunk] = id
         ids += id
     return ids
 
 
-def encode_document(text: str, merges: dict[tuple[int, int], int], pattern: str | None = REGEX_PATTERN) -> list[int]:
+def encode_document(text: str, merges: dict[tuple[int, int], int], pattern: str | None = REGEX_PATTERN, cache=None) -> list[int]:
     """Encode un document complet, encadré par les tokens de début et de fin."""
-    return [BOS_ID] + encode_chunks(text, merges, pattern) + [EOS_ID]
+    return [BOS_ID] + encode(text, merges, pattern, cache) + [EOS_ID]
 
 
-
-def pretokenize(text, pattern):
+def pretokenize(text, pattern) -> list:
     if pattern == None:
         return [text]
     else:

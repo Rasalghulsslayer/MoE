@@ -6,3 +6,5 @@ profile.txt
 data/raw/*
 !data/raw/metadata.json
 data/splits/
+data/tokens/*
+!data/tokens/metadata.json

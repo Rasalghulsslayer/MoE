@@ -1,4 +1,4 @@
-from tokenizer.tokenizer import get_stats, merge, train, build_vocab, encode, decode, encode_chunks, train_reference, train_reg, save_tokenizer, load_tokenizer
+from tokenizer.tokenizer import get_stats, merge, train, build_vocab, encode, decode, encode, train_reference, train_reg, save_tokenizer, load_tokenizer
 from tokenizer.the_regex import REGEX_PATTERN
 import pytest
 import unicodedata
@@ -40,7 +40,7 @@ def test_roundtrip(text):
 @pytest.mark.parametrize("text", ["", "a", "L'été à Paris 🌞", "e\u0301", "日本語",
                                   "def f(x):\n    return x"])
 def test_roundtrip_reg(text):
-    assert decode(encode_chunks(text, TOY), build_vocab(TOY)) == unicodedata.normalize("NFC", text)
+    assert decode(encode(text, TOY), build_vocab(TOY)) == unicodedata.normalize("NFC", text)
 
 def test_decode_partial_char():
     assert decode([195], build_vocab(TOY)) == "\ufffd"
@@ -52,7 +52,7 @@ def test_encode_twice_same_result():
 def test_encode_is_concatenation_of_chunks():
     merges = train("le chat le chien", 270)
     expected = encode("le", merges) + encode(" chat", merges)
-    assert encode_chunks("le chat", merges) == expected
+    assert encode("le chat", merges) == expected
 
 
 TEXT = ("Le chat de la voisine dort sur le canapé. Le chien de Paul aboie dans le jardin. "
@@ -89,7 +89,7 @@ def test_save_load_roundtrip(tmp_path):
     assert loaded_merges == merges
     assert loaded_pattern == REGEX_PATTERN
     assert loaded_specials == SPECIALS
-    assert encode_chunks(text, loaded_merges, loaded_pattern) == encode_chunks(text, merges, REGEX_PATTERN)
+    assert encode(text, loaded_merges, loaded_pattern) == encode(text, merges, REGEX_PATTERN)
 
 
 
