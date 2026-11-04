@@ -1,7 +1,10 @@
-from tokenizer.tokenizer import get_stats, merge, train, build_vocab, encode, decode, encode_chunks, train_reference, train_reg
+from tokenizer.tokenizer import get_stats, merge, train, build_vocab, encode, decode, encode_chunks, train_reference, train_reg, save_tokenizer, load_tokenizer
 from tokenizer.the_regex import REGEX_PATTERN
 import pytest
 import unicodedata
+from tokenizer.special_tokens import SPECIALS, SPECIALS_START, VOCAB_SIZE, BOS_ID, EOS_ID
+from tokenizer.tokenizer import encode_document
+
 
 def test_get_stats():
     assert get_stats([1, 2, 3, 1, 2]) == {(1, 2): 2, (2, 3): 1, (3, 1): 1}
@@ -57,5 +60,37 @@ TEXT = ("Le chat de la voisine dort sur le canapé. Le chien de Paul aboie dans 
 
 def test_incremental_matches_reference():
     assert train_reg(TEXT, 400) == train_reference(TEXT, 400)
+
+def test_specials_layout():
+    assert len(SPECIALS) == 64
+    assert min(SPECIALS.values()) == SPECIALS_START
+    assert max(SPECIALS.values()) == VOCAB_SIZE - 1
+
+
+def test_special_text_is_not_special_token():
+    merges = train("Le chat dort. [INST] Bonjour [/INST] <s>", 300)
+    ids = encode("[INST] <s>", merges)
+    assert all(idx < SPECIALS_START for idx in ids)
+
+
+def test_encode_document():
+    merges = train("Le chat dort.", 270)
+    vocab = build_vocab(merges, SPECIALS)
+    ids = encode_document("Le chat dort.", merges)
+    assert ids[0] == BOS_ID and ids[-1] == EOS_ID
+    assert decode(ids, vocab) == "<s>Le chat dort.</s>"
+
+def test_save_load_roundtrip(tmp_path):
+    text = "Le chat de la voisine dort. Le chien de Paul aboie."
+    merges = train(text, 300)
+    path = tmp_path / "tok.json"
+    save_tokenizer(path, merges, REGEX_PATTERN, SPECIALS, {"test": True})
+    loaded_merges, loaded_pattern, loaded_specials = load_tokenizer(path)
+    assert loaded_merges == merges
+    assert loaded_pattern == REGEX_PATTERN
+    assert loaded_specials == SPECIALS
+    assert encode_chunks(text, loaded_merges, loaded_pattern) == encode_chunks(text, merges, REGEX_PATTERN)
+
+
 
 

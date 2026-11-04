@@ -3,8 +3,11 @@ from collections import Counter, defaultdict
 import unicodedata
 import regex
 import json
+from pathlib import Path
 from tokenizer.the_regex import REGEX_PATTERN
 from tokenizer.tries.try_regex import GPT4_PATTERN
+from tokenizer.special_tokens import BOS_ID, EOS_ID 
+
 
 
 def get_stats(ids: list[int]) -> dict[tuple[int, int], int]:
@@ -116,7 +119,8 @@ def train_reg(text: str, vocab_size: int, pattern=REGEX_PATTERN) -> dict[tuple[i
 
     counts = Counter(text_chunks)
 
-    train_from_counts(counts, vocab_size)
+    return train_from_counts(counts, vocab_size)
+
 
 
 def count_chunks(path, pattern=REGEX_PATTERN, keep_every = 20) -> Counter:
@@ -132,13 +136,15 @@ def count_chunks(path, pattern=REGEX_PATTERN, keep_every = 20) -> Counter:
     return counts
     
 
-def build_vocab(merges: dict[tuple[int, int], int]) -> dict[int, bytes]:
-    """Construit le vocabulaire à partir de la liste de fusions."""
+def build_vocab(merges: dict[tuple[int, int], int], specials: dict[str, int] | None = None) -> dict[int, bytes]:
+    """Construit le vocabulaire à partir de la liste de fusions et des caractères spéciaux."""
     vocab = {}
     for i in range (256):
         vocab[i] = bytes([i])
     for (a, b), i in (merges.items()):
         vocab[i] = (vocab[a] + vocab[b])
+    for name, idx in (specials or {}).items():
+        vocab[idx] = name.encode('utf-8')
     return vocab
 
 
@@ -165,7 +171,7 @@ def encode(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
 
 
 def encode_chunks(text: str, merges: dict[tuple[int, int], int], pattern=REGEX_PATTERN) -> list[int]:
-    """Encode pour les chunks"""
+    """Encode pour les chunks."""
     ids = []
     chunks = pretokenize(text, pattern)
     for chunk in chunks:
@@ -174,11 +180,48 @@ def encode_chunks(text: str, merges: dict[tuple[int, int], int], pattern=REGEX_P
     return ids
 
 
+def encode_document(text: str, merges: dict[tuple[int, int], int], pattern: str | None = REGEX_PATTERN) -> list[int]:
+    """Encode un document complet, encadré par les tokens de début et de fin."""
+    return [BOS_ID] + encode_chunks(text, merges, pattern) + [EOS_ID]
+
+
+
 def pretokenize(text, pattern):
     if pattern == None:
         return [text]
     else:
         return regex.findall(pattern, unicodedata.normalize("NFC", text))
+
+
+FORMAT_VERSION = 1
+
+
+def save_tokenizer(path: Path, merges: dict[tuple[int, int], int], pattern: str | None, specials: dict[str, int], metadata: dict) -> None:
+    """Enregistre le tokenizer en JSON : fusions ordonnées, pré-tokenisation, tokens spéciaux, métadonnées."""
+    ordered = sorted(merges.items(), key=lambda item: item[1])
+    assert [idx for _, idx in ordered] == list(range(256, 256 + len(ordered))), "Ids de fusions non contigus"
+    data = {
+        "format_version": FORMAT_VERSION,
+        "normalization": "NFC",
+        "pattern": pattern,
+        "merges": [list(pair) for pair, _ in ordered],
+        "specials": specials,
+        "metadata": metadata,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False)
+
+
+def load_tokenizer(path: Path) -> tuple[dict[tuple[int, int], int], str | None, dict[str, int]]:
+    """Recharge un tokenizer et renvoie (fusions, pattern, tokens spéciaux)."""
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    assert data["format_version"] == FORMAT_VERSION, "Version de format inconnue"
+    assert data["normalization"] == "NFC", "Normalisation non prise en charge"
+    merges = {tuple(pair): 256 + k for k, pair in enumerate(data["merges"])}
+    return merges, data["pattern"], data["specials"]
+
 
 
     
