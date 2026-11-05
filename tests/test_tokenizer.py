@@ -35,7 +35,7 @@ def test_encode_toy():
 @pytest.mark.parametrize("text", ["", "a", "L'été à Paris 🌞", "e\u0301", "日本語",
                                   "def f(x):\n    return x"])
 def test_roundtrip(text):
-    assert decode(encode(text, TOY), build_vocab(TOY)) == text
+    assert decode(encode(text, TOY, pattern=None), build_vocab(TOY)) == text
 
 @pytest.mark.parametrize("text", ["", "a", "L'été à Paris 🌞", "e\u0301", "日本語",
                                   "def f(x):\n    return x"])

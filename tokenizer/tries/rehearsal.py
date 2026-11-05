@@ -1,3 +1,4 @@
+#Entrainement sur la moitié du vocabulaire pour attester de la faisabilité de l'entrainement en local.
 import time
 from pathlib import Path
 
