@@ -1,11 +1,14 @@
-#Implémentation de RoPE pour l'encodage des positions : choix des paires par moitiés et theta=10000
+#Implémentation de RoPE pour l'encodage des positions : choix des paires par moitiés (usuellement theta=10000)
 import torch 
 from torch import nn
+
 
 def rotate_half(x: torch.Tensor) -> torch.Tensor:
     return torch.cat((-x[..., x.shape[-1]//2:], x[..., :x.shape[-1]//2]), dim=-1)
 
+
 class RotaryEmbedding(nn.Module):
+    """Encodage de la position."""
 
     def __init__(self, head_dim: int, max_len: int, theta: int):
         super().__init__()

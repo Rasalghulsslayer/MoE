@@ -24,6 +24,11 @@ class ModelConfig:
     def head_dim(self) -> int:
         return self.d_model // self.n_heads
 
+    @property
+    def attention_dim(self) -> int:
+        return 2 * self.d_model * self.n_heads * self.head_dim + 2 * self.d_model * self.n_kv_heads * self.head_dim
+
+
 def count_params(cfg: ModelConfig) -> int:
     embedding_params = cfg.vocab_size * cfg.d_model
     transformer_params = cfg.d_model + (cfg.n_heads * cfg.head_dim) * cfg.d_model + 2 * ((cfg.n_kv_heads * cfg.head_dim) * cfg.d_model) + (cfg.n_heads * cfg.head_dim) * cfg.d_model + cfg.d_model + 2 * (cfg.d_model * cfg.ffn_dim) + cfg.ffn_dim * cfg.d_model
@@ -37,10 +42,22 @@ def count_params(cfg: ModelConfig) -> int:
 
 RUN = ModelConfig()
 
+
 DEV = ModelConfig(
     d_model = 256,
     n_layers = 4,
     n_heads = 4,
     n_kv_heads = 2, #GQA, si n_kv_heads = 1 : MQA
     ffn_dim = 704,
+    )
+
+TEST= ModelConfig(
+        vocab_size=1000, 
+        d_model=32, 
+        n_layers=2, 
+        n_heads=4, 
+        n_kv_heads=2, 
+        ffn_dim=64, 
+        context_length=64, 
+        sliding_window=16
     )
