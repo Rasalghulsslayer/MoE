@@ -1,6 +1,5 @@
 from training.dataset import load_tokens, make_sequences, get_batch
 import numpy as np
-import torch
 from tokenizer.tokenizer import decode, build_vocab, load_tokenizer
 
 if __name__ == "__main__":

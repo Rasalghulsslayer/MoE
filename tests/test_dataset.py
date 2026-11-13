@@ -47,13 +47,12 @@ def sequences(data_folder):
 def test_dataset_numpy_to_torch(tokens):
     assert isinstance(torch.from_numpy(tokens), torch.Tensor)
 
-def test_datatset_get_batch(sequences):
+def test_dataset_get_batch(sequences):
     B = 10
     rng1 = np.random.default_rng(42)
     x1, _ = get_batch(sequences, B, rng1)
     rng2 = np.random.default_rng(42)
     x2, _ = get_batch(sequences, B, rng2)
-    print(x2)
     rng3 = np.random.default_rng(0)
     x3, _ = get_batch(sequences, B, rng3)
     assert torch.equal(x1, x2)
