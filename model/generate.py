@@ -32,7 +32,7 @@ def sample_next(logits: torch.Tensor, temperature: float, top_k = None, top_p = 
 
 @torch.no_grad()
 def generate(model: Transformer, idx: torch.Tensor, max_new_tokens: int, temperature: float, top_k=None, top_p=None, use_cache=False) -> torch.Tensor:
-    
+    """Génère les prédictions de la chaine idx"""
     B, T = idx.shape
 
     assert T + max_new_tokens <= DEV.context_length, "LA genearation dépasse la taille de contexte autorisée."
