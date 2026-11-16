@@ -35,6 +35,7 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
     sequences = make_sequences(tokens, cfg.context_length)
 
     t_1 = time.perf_counter()
+    loss=0
     train_loss = []
     optimizer.zero_grad(set_to_none=True)
 
@@ -47,12 +48,13 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
         x = x.to(device)
         y = y.to(device)
 
-        train_step(model, x, y, k=k)
+        loss += train_step(model, x, y, k=k)
 
-        if i % k == 0:
+        if (i + 1) % k == 0:
+            train_loss.append(loss)
+            loss = 0
             optimizer.step()
             scheduler.step()
-            train_loss.append(train_step(model, x, y, k=k))
             optimizer.zero_grad(set_to_none=True)
             t_2 = time.perf_counter()
             print("\n")
