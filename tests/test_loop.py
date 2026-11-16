@@ -1,10 +1,16 @@
+import pytest
 from model.config import TEST, DEV
 from training.loop import train, train_step, make_sequences
 from training.dataset import get_batch
 from model.transformer import Transformer
+from training.train_config import TrainConfig
 import numpy as np
 from utils.runtime import set_seed
 import torch
+
+@pytest.fixture
+def schedule():
+    return TrainConfig()
 
 def test_loop_train_canari():
     set_seed(42)
@@ -25,9 +31,6 @@ def test_loop_train_canari():
     assert loss[-1] < loss[0]
     
 
-
-
-
-def test_loop_train():
-    loss = train(DEV, 1, 10, "train_fr", device_pref="cpu")
+def test_loop_train(schedule):
+    loss = train(DEV, schedule, 1, 10, "train_fr", device_pref="cpu")
     assert loss[-1] < loss[0]

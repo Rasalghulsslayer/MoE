@@ -2,6 +2,8 @@ from model.config import ModelConfig
 from model.transformer import Transformer
 from training.dataset import get_batch, make_sequences, load_tokens
 from utils.runtime import set_seed, get_device
+from training.schedule import get_lr
+from training.train_config import TrainConfig
 import numpy as np
 import torch
 import time
@@ -14,7 +16,7 @@ def train_step(model: Transformer, optimizer, x: torch.Tensor, y: torch.Tensor) 
     optimizer.step()
     return loss.item()
 
-def train(cfg : ModelConfig, batch_size: int, n_steps : int, corpus: str, device_pref=None):
+def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps : int, corpus: str, device_pref=None):
     """Boucle d'entrainement complète"""
 
     set_seed(42)
@@ -25,7 +27,8 @@ def train(cfg : ModelConfig, batch_size: int, n_steps : int, corpus: str, device
     model.to(device)
     model.train()
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=schedule.base_lr)
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda = lambda step: get_lr(step, schedule)/schedule.base_lr)
 
     tokens = load_tokens(f"data/tokens/{corpus}.bin")
     sequences = make_sequences(tokens, cfg.context_length)
@@ -47,9 +50,12 @@ def train(cfg : ModelConfig, batch_size: int, n_steps : int, corpus: str, device
         if i % 10 == 0:
             t_2 = time.perf_counter()
             print(f"Modèle en cours d'entrainement, step: {i} / {n_steps}")
+            print(f"Learning rate : {scheduler.get_last_lr()}")
             print(f"Perte actuelle : {train_loss[-1]}")
             print(f"Temps d'entrainement du dernier step : {t_2 - t_step} secondes")
             print(f"Temps d'entrainement total : {t_2 - t_1} secondes")
+
+        scheduler.step()
 
     return train_loss
 
