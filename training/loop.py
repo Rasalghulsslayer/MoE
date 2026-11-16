@@ -1,4 +1,4 @@
-from model.config import ModelConfig
+from model.config import ModelConfig, DEV
 from model.transformer import Transformer
 from training.dataset import get_batch, make_sequences, load_tokens
 from utils.runtime import set_seed, get_device
@@ -49,13 +49,30 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps : in
 
         if i % 10 == 0:
             t_2 = time.perf_counter()
-            print(f"Modèle en cours d'entrainement, step: {i} / {n_steps}")
+            print("\n")
+            print(f"===Modèle en cours d'entrainement, step: {i} / {n_steps}===")
             print(f"Learning rate : {scheduler.get_last_lr()}")
             print(f"Perte actuelle : {train_loss[-1]}")
             print(f"Temps d'entrainement du dernier step : {t_2 - t_step} secondes")
             print(f"Temps d'entrainement total : {t_2 - t_1} secondes")
+            print("\n")
 
         scheduler.step()
 
     return train_loss
+
+if __name__ == "__main__":
+
+    cfg = DEV
+
+    schedule = TrainConfig()
+
+    B = 10
+
+    n_steps = 200
+
+    corpus = "train_fr"
+
+    train_loss = train(cfg, schedule, B, n_steps, corpus)
+
 
