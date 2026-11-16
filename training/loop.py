@@ -6,17 +6,18 @@ from training.schedule import get_lr
 from training.train_config import TrainConfig
 import numpy as np
 import torch
+import matplotlib.pyplot as plt
+import seaborn as sns
 import time
 
-def train_step(model: Transformer, optimizer, x: torch.Tensor, y: torch.Tensor) -> float:
+def train_step(model: Transformer, x: torch.Tensor, y: torch.Tensor, k: int = 1) -> float:
     """Un unique pas d'entraînement"""
-    optimizer.zero_grad(set_to_none=True)
     _, loss = model(x, targets=y)
+    loss = loss / k
     loss.backward()
-    optimizer.step()
     return loss.item()
 
-def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps : int, corpus: str, device_pref=None):
+def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int, corpus: str, k: int=1, device_pref=None):
     """Boucle d'entrainement complète"""
 
     set_seed(42)
@@ -35,19 +36,24 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps : in
 
     t_1 = time.perf_counter()
     train_loss = []
+    optimizer.zero_grad(set_to_none=True)
 
     for i in range (n_steps):
 
         t_step = time.perf_counter()
 
-        x, y = get_batch(sequences, batch_size, rng)
+        x, y = get_batch(sequences, int(batch_size/k), rng)
 
         x = x.to(device)
         y = y.to(device)
 
-        train_loss.append(train_step(model, optimizer, x, y))
+        train_step(model, x, y, k=k)
 
-        if i % 10 == 0:
+        if i % k == 0:
+            optimizer.step()
+            scheduler.step()
+            train_loss.append(train_step(model, x, y, k=k))
+            optimizer.zero_grad(set_to_none=True)
             t_2 = time.perf_counter()
             print("\n")
             print(f"===Modèle en cours d'entrainement, step: {i} / {n_steps}===")
@@ -57,9 +63,24 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps : in
             print(f"Temps d'entrainement total : {t_2 - t_1} secondes")
             print("\n")
 
-        scheduler.step()
 
     return train_loss
+
+
+
+def plot_loss(losses, window=20):
+    moyenne = [
+        sum(losses[max(0, i - window + 1):i + 1]) / (i - max(0, i - window + 1) + 1)
+        for i in range(len(losses))
+    ]
+    sns.set_theme(style="whitegrid")
+    plt.figure(figsize=(10, 5))
+    sns.lineplot(x=range(len(losses)), y=losses, color="#a8c8e8", linewidth=1, label="loss brute")
+    sns.lineplot(x=range(len(losses)), y=moyenne, color="#1a3a6b", linewidth=2, label=f"moyenne mobile ({window})")
+    plt.xlabel("Step")
+    plt.ylabel("Cross-entropy")
+    plt.title("Train loss")
+    plt.show()
 
 if __name__ == "__main__":
 
@@ -74,5 +95,7 @@ if __name__ == "__main__":
     corpus = "train_fr"
 
     train_loss = train(cfg, schedule, B, n_steps, corpus)
+
+    plot_loss(train_loss)
 
 
