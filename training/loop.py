@@ -19,6 +19,7 @@ def train_step(model: Transformer, x: torch.Tensor, y: torch.Tensor, k: int = 1)
 
 def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int, corpus: str, k: int=1, device_pref=None):
     """Boucle d'entrainement complète"""
+    assert batch_size % k == 0, "Mauvaise entrée pour batch_size et k, veuillez choisir batch_size multiple de k."
 
     set_seed(42)
     rng = np.random.default_rng(42)
@@ -39,7 +40,7 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
     train_loss = []
     optimizer.zero_grad(set_to_none=True)
 
-    for i in range (n_steps):
+    for i in range (n_steps // k * k):
 
         t_step = time.perf_counter()
 
@@ -61,7 +62,8 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
             print(f"===Modèle en cours d'entrainement, step: {i} / {n_steps}===")
             print(f"Learning rate : {scheduler.get_last_lr()}")
             print(f"Perte actuelle : {train_loss[-1]}")
-            print(f"Temps d'entrainement du dernier step : {t_2 - t_step} secondes")
+            print(f"Temps d'entrainement du dernier micro-batch : {t_2 - t_step} secondes")
+            t_step = time.perf_counter()
             print(f"Temps d'entrainement total : {t_2 - t_1} secondes")
             print("\n")
 
