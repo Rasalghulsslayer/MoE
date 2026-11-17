@@ -35,7 +35,7 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
     train_loss = []
 
     if resume_from is not None:
-        data = load_checkpoint(resume_from, device=device)
+        data = load_checkpoint(resume_from)
 
         if data["config"] != cfg:
             raise ValueError("Ce checkpoint n'est pas compatible avec la configuration")
@@ -87,7 +87,7 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
             t_step = time.perf_counter()
             print(f"Temps d'entrainement total : {t_2 - t_1} secondes")
             print("\n")
-            save_checkpoint(i, model, optimizer, scheduler, rng, train_loss, cfg, schedule, 1)
+            save_checkpoint(i, model, optimizer, scheduler, rng, train_loss, cfg, schedule, save_every=50)
 
 
     return train_loss
