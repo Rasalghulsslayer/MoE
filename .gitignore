@@ -8,4 +8,4 @@ data/raw/*
 data/splits/
 data/tokens/*
 !data/tokens/metadata.json
-artifacts/checkpoints/
+artifacts/checkpoint/
