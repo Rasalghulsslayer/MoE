@@ -51,8 +51,7 @@ DEV = ModelConfig(
     ffn_dim = 704,
     )
 
-TEST= ModelConfig(
-        vocab_size=1000, 
+TEST= ModelConfig( 
         d_model=32, 
         n_layers=2, 
         n_heads=4, 
