@@ -14,7 +14,7 @@ def cfg():
     return TEST
 
 
-def test_checkpoint(cfg, schedule, corpus = "train_fr"):
+def test_checkpoint(cfg, schedule, corpus = "fr"):
 
     B = 10
 
@@ -24,7 +24,7 @@ def test_checkpoint(cfg, schedule, corpus = "train_fr"):
 
     train_loss_split_training = train(cfg, schedule, B, 40, corpus, k=2, resume_from="latest.pt")
 
-    assert all(abs(train_loss_split_training[i] - train_loss_full_training[i]) < 1e-6 for i in range(len(train_loss_split_training)))
+    assert all(abs(train_loss_split_training[0][i] - train_loss_full_training[0][i]) < 1e-6 for i in range(len(train_loss_split_training)))
 
 
 

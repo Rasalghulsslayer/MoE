@@ -1,12 +1,13 @@
 import pytest
 from model.config import TEST, DEV
-from training.loop import train, train_step, make_sequences
+from training.loop import train, train_step, make_sequences, evaluate
 from training.dataset import get_batch
 from model.transformer import Transformer
 from training.train_config import TrainConfig
 import numpy as np
-from utils.runtime import set_seed
+from utils.runtime import set_seed, get_device
 import torch
+import math
 
 @pytest.fixture
 def schedule():
@@ -34,7 +35,7 @@ def test_loop_train_canari():
     
 
 def test_loop_train(schedule):
-    loss = train(DEV, schedule, 1, 10, "train_fr", device_pref="cpu")
+    loss = train(DEV, schedule, 1, 10, "fr", device_pref="cpu")
     assert loss[-1] < loss[0]
 
 def test_loop_mini_batch_processing(schedule):
@@ -62,3 +63,15 @@ def test_loop_mini_batch_processing(schedule):
     grads_B = {name: p.grad.clone() for name, p in model.named_parameters()}
 
     assert all(torch.allclose(grads_A[name],grads_B[name], atol=1e-5) for name, _ in model.named_parameters())
+
+def test_evaluate_not_trained():
+
+    B = 20
+
+    model = Transformer(TEST)
+
+    rng = np.random.default_rng(42)
+    tokens = rng.choice(TEST.vocab_size, 1000, replace=False)
+    sequences = make_sequences(tokens, 10)
+    
+    assert abs(evaluate(model, sequences, 4, B, device = get_device("cpu")) - math.log(TEST.vocab_size)) < 1e-2

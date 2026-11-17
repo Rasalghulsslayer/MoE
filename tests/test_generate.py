@@ -35,7 +35,7 @@ def test_generate_top_k(x, model):
     print(generate(model, x, max_new_tokens=30, temperature=0.))
     assert torch.equal(generate(model, x, max_new_tokens=30, temperature=0.5, top_k=1), generate(model, x, max_new_tokens=30, temperature=0.))
 
-def test_generate_top_p(x, model):
+def test_generate_top_p():
     logits = torch.log(torch.tensor([[0.5, 0.3, 0.15, 0.05]]))
     assert torch.allclose(filter_top_p(logits, 0.8), torch.tensor([[math.log(0.5), math.log(0.3), float('-inf'), float('-inf')]]), atol=1e-6)
 
