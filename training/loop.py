@@ -22,22 +22,19 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
     """Boucle d'entrainement complète"""
     assert batch_size % k == 0, "Mauvaise entrée pour batch_size et k, veuillez choisir batch_size multiple de k."
     device = get_device(device_pref)
-    rng = np.random.default_rng()
 
+    if resume_from is None:
+        set_seed(42)
+
+    rng = np.random.default_rng()
     model = Transformer(cfg) 
     model.to(device)
     model.train()
-
     optimizer = torch.optim.AdamW(model.parameters(), lr=schedule.base_lr)
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda = lambda step: get_lr(step, schedule)/schedule.base_lr)
     train_loss = []
 
-    if resume_from is None:
-        set_seed(42)
-        rng = np.random.default_rng(42)
-        i=0
-
-    else:
+    if resume_from is not None:
         data = load_checkpoint(resume_from, device=device)
 
         if data["config"] != cfg:
@@ -50,6 +47,9 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
         rng.bit_generator.state = data["rng_numpy"]
         torch.set_rng_state(data["rng_torch"])
         train_loss = data["train_loss"]
+    else: 
+        rng = np.random.default_rng(42)
+        i=0
         
 
     tokens = load_tokens(f"data/tokens/{corpus}.bin")

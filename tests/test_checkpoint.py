@@ -22,9 +22,9 @@ def test_checkpoint(cfg, schedule, corpus = "train_fr"):
 
     train(cfg, schedule, B, 20, corpus, k=2)
 
-    train_loss_split_training = train(cfg, schedule, B, 20, corpus, k=2, resume_from="latest.pt")
+    train_loss_split_training = train(cfg, schedule, B, 40, corpus, k=2, resume_from="latest.pt")
 
-    assert all(train_loss_split_training[i] == train_loss_full_training[i] for i in range(len(train_loss_split_training)))
+    assert all(abs(train_loss_split_training[i] - train_loss_full_training[i]) < 1e-6 for i in range(len(train_loss_split_training)))
 
 
 

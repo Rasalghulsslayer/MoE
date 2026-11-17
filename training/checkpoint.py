@@ -9,7 +9,6 @@ CHECKPOINT_PATH = Path("artifacts/checkpoint")
 def save_checkpoint(i: int, model, optimizer, scheduler, rng, train_loss, cfg, schedule, save_every, path: Path = CHECKPOINT_PATH):
     """Sauvegarde l'état actuel pour reprendre l'entrainement"""
     latest = path / "latest.pt"
-    archive = path / f"{datetime.now(timezone.utc).isoformat()}-checkpoint.pt"
     path.mkdir(parents=True, exist_ok=True)
 
     data = {
@@ -34,6 +33,6 @@ def save_checkpoint(i: int, model, optimizer, scheduler, rng, train_loss, cfg, s
 
     
 
-def load_checkpoint(file: str, device=None):
+def load_checkpoint(file: str):
     """Recharge un checkpoint."""
     return torch.load(CHECKPOINT_PATH / file, map_location="cpu", weights_only=False)
