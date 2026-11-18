@@ -35,6 +35,7 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
     else :
         device = get_device(device_pref)
 
+    first_batch = True
 
     assert batch_size % k == 0, "Mauvaise entrée pour batch_size et k, veuillez choisir batch_size multiple de k."
 
@@ -95,6 +96,9 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
                 tranche = sample_indices(len(sequences), dist[0], dist[1], epoch)
                 cursor = 0
             indices = tranche[cursor:cursor+ int(batch_size/k)]
+            if first_batch:
+                print(f"[BATCH0] rank {dist[0]} : {int(indices.sum())}")
+                first_batch=False
             x, y = get_batch_from_indices(sequences, indices)
             cursor += int(batch_size/k)
         else:
@@ -128,7 +132,6 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
                 eval_every = 20
                 n_batches = 10
                 if i % eval_every == 0: #eval_every multiple de k
-                    set_seed(42)
                     vl = evaluate(model, val_sequences, n_batches, batch_size // k, device)
                     val_loss.append(vl)
                     print(f"Perte d'évaluation actuelle : {(vl)}")
@@ -193,23 +196,20 @@ def evaluate(model, sequences, n_batches, batch_size, device, rng=None):
 
 if __name__ == "__main__":
 
-    # cfg = DEV
-
-    # schedule = TrainConfig()
-
-    # B = 40
-
-    # n_steps = 200
-
-    # corpus = "fr"
-
-    # train_loss, val_loss = train(cfg, schedule, B, n_steps, corpus, k=4, device_pref="cpu")
-
-    # plot_loss(train_loss, val_losses=val_loss)
     dist = setup_distributed()
     print(dist)
     if dist is not None:
         torch.distributed.destroy_process_group()
+
+    # cfg = DEV
+    # schedule = TrainConfig()
+    # B = 40
+    # n_steps = 200
+    # corpus = "fr"
+    # train_loss, val_loss = train(cfg, schedule, B, n_steps, corpus, k=4, device_pref="cpu")
+    # plot_loss(train_loss, val_losses=val_loss)
+
+
 
 
 
