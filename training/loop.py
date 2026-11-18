@@ -90,13 +90,13 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
         t_step = time.perf_counter()
 
         if dist is not None:
-            if cursor + batch_size > len(tranche):
+            if cursor + int(batch_size/k) > len(tranche):
                 epoch+=1
                 tranche = sample_indices(len(sequences), dist[0], dist[1], epoch)
                 cursor = 0
-            indices = tranche[cursor:cursor+ batch_size]
+            indices = tranche[cursor:cursor+ int(batch_size/k)]
             x, y = get_batch_from_indices(sequences, indices)
-            cursor += batch_size
+            cursor += int(batch_size/k)
         else:
             x, y = get_batch(sequences, int(batch_size/k), rng)
 
