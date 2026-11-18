@@ -3,7 +3,7 @@ from tokenizer.tokenizer import load_tokenizer
 from model.config import ModelConfig, DEV
 from model.transformer import Transformer
 from model.generate import generate
-from training.dataset import get_batch, make_sequences, load_tokens, sample_indices
+from training.dataset import get_batch, make_sequences, load_tokens, sample_indices, get_batch_from_indices
 from training.schedule import get_lr
 from training.train_config import TrainConfig
 from training.checkpoint import load_checkpoint, save_checkpoint
@@ -79,14 +79,24 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
     
     optimizer.zero_grad(set_to_none=True)
 
+    if dist is not None:
+        epoch = 0
+        tranche = sample_indices(len(sequences), dist[0], dist[1], epoch)
+        cursor = 0
+
     while (i < (n_steps // k * k)):
         i+=1
 
         t_step = time.perf_counter()
 
         if dist is not None:
-            perm = sample_indices(len(sequences), dist[1], i)
-            x, y = get_batch(perm[dist[0]], int(batch_size/k), rng)
+            if cursor + batch_size > len(tranche):
+                epoch+=1
+                tranche = sample_indices(len(sequences), dist[0], dist[1], epoch)
+                cursor = 0
+            indices = tranche[cursor:cursor+ batch_size]
+            x, y = get_batch_from_indices(sequences, indices)
+            cursor += batch_size
         else:
             x, y = get_batch(sequences, int(batch_size/k), rng)
 

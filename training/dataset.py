@@ -21,9 +21,16 @@ def get_batch(sequences, B, rng: np.random.Generator):
     x, y = torch.tensor(x, dtype=torch.int64), torch.tensor(y, dtype=torch.int64)
     return x, y
 
-def sample_indices(n_sequences, world_size, epoch):
-    rng = np.random.default_rng(42 + epoch)
-    return rng.choice(n_sequences, world_size, replace=False)
+def sample_indices(n_sequences, rank, world_size, epoch):
+    """Liste les séquences que le moteur "rank" doit process"""
+    perm = np.random.default_rng(42 + epoch).permutation(n_sequences)
+    return perm[rank::world_size]
+
+def get_batch_from_indices(sequences, indices):
+    """Extrait des séquences pré-selectionnées du corpus pour construire les batchs."""
+    x, y = sequences[indices, :-1], sequences[indices, 1:]
+    x, y = torch.tensor(x, dtype=torch.int64), torch.tensor(y, dtype=torch.int64)
+    return x, y
 
 
 
