@@ -30,12 +30,13 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
 
     dist = setup_distributed()
 
-    if dist:
+    if dist is not None:
         device = get_device("cpu")
+    else :
+        device = get_device(device_pref)
 
 
     assert batch_size % k == 0, "Mauvaise entrée pour batch_size et k, veuillez choisir batch_size multiple de k."
-    device = get_device(device_pref)
 
     if resume_from is None:
         set_seed(42)
@@ -191,7 +192,10 @@ if __name__ == "__main__":
     # train_loss, val_loss = train(cfg, schedule, B, n_steps, corpus, k=4, device_pref="cpu")
 
     # plot_loss(train_loss, val_losses=val_loss)
+    dist = setup_distributed()
+    print(dist)
+    if dist is not None:
+        torch.distributed.destroy_process_group()
 
-    print(setup_distributed())
 
 
