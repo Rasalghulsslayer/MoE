@@ -7,14 +7,16 @@ from training.dataset import get_batch, make_sequences, load_tokens
 from training.schedule import get_lr
 from training.train_config import TrainConfig
 from training.checkpoint import load_checkpoint, save_checkpoint
-from utils.runtime import set_seed, get_device
+from utils.runtime import set_seed, get_device, setup_distributed, is_main_process
 from pathlib import Path
 
 import numpy as np
 import torch
+import math
 import matplotlib.pyplot as plt
 import seaborn as sns
 import time
+
 
 def train_step(model: Transformer, x: torch.Tensor, y: torch.Tensor, k: int = 1) -> float:
     """Un unique pas d'entraînement"""
@@ -25,6 +27,13 @@ def train_step(model: Transformer, x: torch.Tensor, y: torch.Tensor, k: int = 1)
 
 def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int, corpus: str, k: int=1, device_pref=None, resume_from = None):
     """Boucle d'entrainement complète"""
+
+    dist = setup_distributed()
+
+    if dist:
+        device = get_device("cpu")
+
+
     assert batch_size % k == 0, "Mauvaise entrée pour batch_size et k, veuillez choisir batch_size multiple de k."
     device = get_device(device_pref)
 
@@ -88,33 +97,38 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
             scheduler.step()
             optimizer.zero_grad(set_to_none=True)
 
-            t_2 = time.perf_counter()
-            print("\n")
-            print(f"===Modèle en cours d'entrainement, step: {i} / {n_steps}===")
-            print(f"Learning rate : {scheduler.get_last_lr()}")
-            print(f"Perte d'entrainement actuelle : {train_loss[-1]}")
-            print(f"Temps d'entrainement du dernier micro-batch : {t_2 - t_step} secondes")
-            t_step = time.perf_counter()
-            print(f"Temps d'entrainement total : {t_2 - t_1} secondes")
-            print("\n")
-            
-            save_checkpoint(i, model, optimizer, scheduler, rng, train_loss, cfg, schedule, save_every=50)
-            eval_every = 20
-            n_batches = 10
-            if i % eval_every == 0: #eval_every multiple de k
-                set_seed(42)
-                vl = evaluate(model, val_sequences, n_batches, batch_size // k, device)
-                val_loss.append(vl)
-                print(f"Perte d'évaluation actuelle : {(vl)}")
 
-            generate_every = 1
-            if i % generate_every == 0: #generate_every multiple de k
-                set_seed(42)
-                merges, pattern, specials = load_tokenizer(Path("artifacts/tokenizer/fr_code_32k.json"))
-                idx = torch.tensor(encode("Le cha", merges, pattern)).view(1,-1)
-                idx = idx.to(device)
-                print(decode(generate(model, idx, max_new_tokens=50, temperature=0.8, top_k=5, top_p=10).squeeze(0).tolist(), build_vocab(merges, specials)))
+            if is_main_process(dist):
+                t_2 = time.perf_counter()
+                print("\n")
+                print(f"===Modèle en cours d'entrainement, step: {i} / {n_steps}===")
+                print(f"Learning rate : {scheduler.get_last_lr()}")
+                print(f"Perte d'entrainement actuelle : {train_loss[-1]}")
+                print(f"Temps d'entrainement du dernier micro-batch : {t_2 - t_step} secondes")
+                t_step = time.perf_counter()
+                print(f"Temps d'entrainement total : {t_2 - t_1} secondes")
+                print("\n")
+                
+                save_checkpoint(i, model, optimizer, scheduler, rng, train_loss, cfg, schedule, save_every=50)
+                eval_every = 20
+                n_batches = 10
+                if i % eval_every == 0: #eval_every multiple de k
+                    set_seed(42)
+                    vl = evaluate(model, val_sequences, n_batches, batch_size // k, device)
+                    val_loss.append(vl)
+                    print(f"Perte d'évaluation actuelle : {(vl)}")
+                    print(f"Perplexité associée : {math.exp(vl)}")
 
+                generate_every = 100
+                if i % generate_every == 0: #generate_every multiple de k
+                    set_seed(42)
+                    merges, pattern, specials = load_tokenizer(Path("artifacts/tokenizer/fr_code_32k.json"))
+                    idx = torch.tensor(encode("Le cha", merges, pattern)).view(1,-1)
+                    idx = idx.to(device)
+                    print(decode(generate(model, idx, max_new_tokens=50, temperature=0.8, top_k=5, top_p=10).squeeze(0).tolist(), build_vocab(merges, specials)))
+
+    if dist:
+        torch.distributed.destroy_process_group()
 
     return train_loss, val_loss
 
@@ -164,18 +178,20 @@ def evaluate(model, sequences, n_batches, batch_size, device, rng=None):
 
 if __name__ == "__main__":
 
-    cfg = DEV
+    # cfg = DEV
 
-    schedule = TrainConfig()
+    # schedule = TrainConfig()
 
-    B = 40
+    # B = 40
 
-    n_steps = 200
+    # n_steps = 200
 
-    corpus = "fr"
+    # corpus = "fr"
 
-    train_loss, val_loss = train(cfg, schedule, B, n_steps, corpus, k=4, device_pref="cpu")
+    # train_loss, val_loss = train(cfg, schedule, B, n_steps, corpus, k=4, device_pref="cpu")
 
-    plot_loss(train_loss, val_losses=val_loss)
+    # plot_loss(train_loss, val_losses=val_loss)
+
+    print(setup_distributed())
 
 

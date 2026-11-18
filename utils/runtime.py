@@ -2,7 +2,9 @@
 import torch
 import random
 import resource
+import os
 import numpy as np
+import torch.distributed as dist
 
 def set_seed(seed):
     random.seed(seed)
@@ -32,3 +34,16 @@ def get_device(preference=None):
 def mem_mo() -> float:
     """Pic de mémoire du processus en Mo (ru_maxrss est en octet sur macOS)"""
     return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1e6
+
+def setup_distributed():
+    """Initialise le groupe de processus si lancé par torchrun, sinon rend None"""
+    if "WORLD_SIZE" not in os.environ:
+        return None
+    
+    dist.init_process_group(backend="gloo")
+    rank = int(os.environ["RANK"])
+    world_size = int(os.environ["WORLD_SIZE"])
+    return (rank, world_size)
+
+def is_main_process(dist) -> bool:
+    return dist is None or dist[0] == 0
