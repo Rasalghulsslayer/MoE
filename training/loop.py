@@ -1,4 +1,4 @@
-from tokenizer.tokenizer import encode, decode
+from tokenizer.tokenizer import encode, decode, build_vocab
 from tokenizer.tokenizer import load_tokenizer
 from model.config import ModelConfig, DEV
 from model.transformer import Transformer
@@ -12,7 +12,6 @@ from pathlib import Path
 
 import numpy as np
 import torch
-import math
 import matplotlib.pyplot as plt
 import seaborn as sns
 import time
@@ -106,22 +105,23 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
                 set_seed(42)
                 vl = evaluate(model, val_sequences, n_batches, batch_size // k, device)
                 val_loss.append(vl)
-                print(f"Perplexité val : {math.exp(vl):.0f}")
+                print(f"Perte d'évaluation actuelle : {(vl)}")
 
-            generate_every = 100
+            generate_every = 1
             if i % generate_every == 0: #generate_every multiple de k
                 set_seed(42)
-                merges, pattern, _ = load_tokenizer(Path("artifacts/tokenizer/fr_code_32k.json"))
-                idx = encode("Le cha", merges, pattern)
-                print(generate(model, idx, max_new_tokens=50, temperature=0.8, top_k=5, top_p=10))
+                merges, pattern, specials = load_tokenizer(Path("artifacts/tokenizer/fr_code_32k.json"))
+                idx = torch.tensor(encode("Le cha", merges, pattern)).view(1,-1)
+                idx = idx.to(device)
+                print(decode(generate(model, idx, max_new_tokens=50, temperature=0.8, top_k=5, top_p=10).squeeze(0).tolist(), build_vocab(merges, specials)))
 
 
     return train_loss, val_loss
 
 
 
-def plot_loss(losses, window=20):
-    """Graph de la loss."""
+def plot_loss(losses, val_losses=None, window=20):
+    """Graph de la loss train (+ val si fournie)."""
     mean = [
         sum(losses[max(0, i - window + 1):i + 1]) / (i - max(0, i - window + 1) + 1)
         for i in range(len(losses))
@@ -130,9 +130,16 @@ def plot_loss(losses, window=20):
     plt.figure(figsize=(10, 5))
     sns.lineplot(x=range(len(losses)), y=losses, color="#a8c8e8", linewidth=1, label="loss brute")
     sns.lineplot(x=range(len(losses)), y=mean, color="#1a3a6b", linewidth=2, label=f"moyenne mobile ({window})")
+
+    if val_losses:
+        # val est clairsemée : positions réparties uniformément sur l'axe des steps
+        steps_val = [int((j + 1) * len(losses) / len(val_losses)) for j in range(len(val_losses))]
+        sns.lineplot(x=steps_val, y=val_losses, color="#c8553d", marker="o", linewidth=1.5, label="loss val")
+
     plt.xlabel("Step")
     plt.ylabel("Cross-entropy")
-    plt.title("Train loss")
+    plt.title("Loss train / validation")
+    plt.legend()
     plt.show()
 
 
@@ -165,10 +172,10 @@ if __name__ == "__main__":
 
     n_steps = 200
 
-    corpus = "train_fr"
+    corpus = "fr"
 
-    train_loss = train(cfg, schedule, B, n_steps, corpus, k=4)
+    train_loss, val_loss = train(cfg, schedule, B, n_steps, corpus, k=4, device_pref="cpu")
 
-    plot_loss(train_loss)
+    plot_loss(train_loss, val_losses=val_loss)
 
 
