@@ -51,6 +51,7 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
     train_loss = []
 
     if resume_from is not None:
+        print(f"Reprise de l'entrainement à partir de {resume_from}")
         data = load_checkpoint(resume_from)
 
         if data["config"] != cfg:
@@ -81,6 +82,8 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
 
     t_1 = time.perf_counter()
 
+    t_steps = []
+
     loss=0
     
     optimizer.zero_grad(set_to_none=True)
@@ -93,7 +96,7 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
     while (i < (n_steps // k * k)):
         i+=1
 
-        t_step = time.perf_counter()
+        t_step_beg = time.perf_counter()
 
         if dist is not None:
             if cursor + int(batch_size/k) > len(tranche):
@@ -114,6 +117,10 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
 
         loss += train_step(model, x, y, k=k)
 
+        t_step_end = time.perf_counter()
+
+        t_steps.append(t_step_end - t_step_beg)
+
         if i % k == 0:
             train_loss.append(loss)
             loss = 0
@@ -128,22 +135,21 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
                 print(f"===Modèle en cours d'entrainement, step: {i} / {n_steps}===")
                 print(f"Learning rate : {scheduler.get_last_lr()}")
                 print(f"Perte d'entrainement actuelle : {train_loss[-1]}")
-                print(f"Temps d'entrainement du dernier micro-batch : {t_2 - t_step} secondes")
-                t_step = time.perf_counter()
+                print(f"Temps d'entrainement du dernier micro-batch : {t_2 - t_step_beg} secondes")
                 print(f"Temps d'entrainement total : {t_2 - t_1} secondes")
                 print("\n")
                 
                 save_checkpoint(i, raw_model, optimizer, scheduler, rng, train_loss, cfg, schedule, save_every=50)
                 eval_every = 20
                 n_batches = 10
-                if i % eval_every == 0: #eval_every multiple de k
+                if i % eval_every == 0 or i  == (n_steps // k * k): #eval_every multiple de k
                     vl = evaluate(raw_model, val_sequences, n_batches, batch_size // k, device)
                     val_loss.append(vl)
                     print(f"Perte d'évaluation actuelle : {(vl)}")
                     print(f"Perplexité associée : {math.exp(vl)}")
 
                 generate_every = 100
-                if i % generate_every == 0: #generate_every multiple de k
+                if i % generate_every == 0 or i  == (n_steps // k * k): #generate_every multiple de k
                     set_seed(42)
                     merges, pattern, specials = load_tokenizer(Path("artifacts/tokenizer/fr_code_32k.json"))
                     idx = torch.tensor(encode("Le cha", merges, pattern)).view(1,-1)
@@ -153,7 +159,7 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
     if dist:
         torch.distributed.destroy_process_group()
 
-    return train_loss, val_loss
+    return train_loss, val_loss, (sum(t_steps) / len(t_steps))
 
 
 
@@ -201,18 +207,20 @@ def evaluate(model, sequences, n_batches, batch_size, device, rng=None):
 
 if __name__ == "__main__":
 
-    dist = setup_distributed()
-    print(dist)
-    if dist is not None:
-        torch.distributed.destroy_process_group()
+    # dist = setup_distributed()
+    # print(dist)
+    # if dist is not None:
+    #     torch.distributed.destroy_process_group()
 
-    # cfg = DEV
-    # schedule = TrainConfig()
-    # B = 40
-    # n_steps = 200
-    # corpus = "fr"
-    # train_loss, val_loss = train(cfg, schedule, B, n_steps, corpus, k=4, device_pref="cpu")
-    # plot_loss(train_loss, val_losses=val_loss)
+    cfg = DEV
+    schedule = TrainConfig()
+    B = 40
+    n_steps = 200
+    corpus = "fr"
+    train_loss, val_loss = train(cfg, schedule, B, n_steps, corpus, k=4, device_pref="cpu")
+    plot_loss(train_loss, val_losses=val_loss)
+
+
 
 
 
