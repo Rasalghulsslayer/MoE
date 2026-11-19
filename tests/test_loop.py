@@ -35,7 +35,7 @@ def test_loop_train_canari():
     
 
 def test_loop_train(schedule):
-    loss = train(DEV, schedule, 1, 10, "fr", device_pref="cpu")
+    loss, _, _ = train(DEV, schedule, 1, 10, "fr", device_pref="cpu")
     assert loss[-1] < loss[0]
 
 def test_loop_mini_batch_processing(schedule):

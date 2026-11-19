@@ -207,18 +207,18 @@ def evaluate(model, sequences, n_batches, batch_size, device, rng=None):
 
 if __name__ == "__main__":
 
-    # dist = setup_distributed()
-    # print(dist)
-    # if dist is not None:
-    #     torch.distributed.destroy_process_group()
+    dist = setup_distributed()
+    print(dist)
+    if dist is not None:
+        torch.distributed.destroy_process_group()
 
-    cfg = DEV
-    schedule = TrainConfig()
-    B = 40
-    n_steps = 200
-    corpus = "fr"
-    train_loss, val_loss = train(cfg, schedule, B, n_steps, corpus, k=4, device_pref="cpu")
-    plot_loss(train_loss, val_losses=val_loss)
+    # cfg = DEV
+    # schedule = TrainConfig()
+    # B = 40
+    # n_steps = 200
+    # corpus = "fr"
+    # train_loss, val_loss, _ = train(cfg, schedule, B, n_steps, corpus, k=4, device_pref="cpu")
+    # plot_loss(train_loss, val_losses=val_loss)
 
 
 
