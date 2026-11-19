@@ -66,6 +66,11 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
     else: 
         rng = np.random.default_rng(42)
         i=0
+
+
+    raw_model = model
+    if dist is not None:
+        model = torch.nn.parallel.DistributedDataParallel(raw_model)
         
 
     tokens = load_tokens(f"data/tokens/train_{corpus}.bin")
@@ -128,11 +133,11 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
                 print(f"Temps d'entrainement total : {t_2 - t_1} secondes")
                 print("\n")
                 
-                save_checkpoint(i, model, optimizer, scheduler, rng, train_loss, cfg, schedule, save_every=50)
+                save_checkpoint(i, raw_model, optimizer, scheduler, rng, train_loss, cfg, schedule, save_every=50)
                 eval_every = 20
                 n_batches = 10
                 if i % eval_every == 0: #eval_every multiple de k
-                    vl = evaluate(model, val_sequences, n_batches, batch_size // k, device)
+                    vl = evaluate(raw_model, val_sequences, n_batches, batch_size // k, device)
                     val_loss.append(vl)
                     print(f"Perte d'évaluation actuelle : {(vl)}")
                     print(f"Perplexité associée : {math.exp(vl)}")
@@ -143,7 +148,7 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
                     merges, pattern, specials = load_tokenizer(Path("artifacts/tokenizer/fr_code_32k.json"))
                     idx = torch.tensor(encode("Le cha", merges, pattern)).view(1,-1)
                     idx = idx.to(device)
-                    print(decode(generate(model, idx, max_new_tokens=50, temperature=0.8, top_k=5, top_p=10).squeeze(0).tolist(), build_vocab(merges, specials)))
+                    print(decode(generate(raw_model, idx, max_new_tokens=50, temperature=0.8, top_k=5, top_p=10).squeeze(0).tolist(), build_vocab(merges, specials)))
 
     if dist:
         torch.distributed.destroy_process_group()
