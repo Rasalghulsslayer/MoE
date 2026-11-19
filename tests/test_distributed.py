@@ -2,6 +2,7 @@ import subprocess
 import re
 import sys
 import torch
+import math
 from training.dataset import sample_indices
 
 def test_distributed_solo():
@@ -64,7 +65,7 @@ def test_distributed_smoke_ddp():
         [sys.executable, "-m", "torch.distributed.run",
          "--nproc_per_node=2",
          "--master-addr=127.0.0.1", "--master-port=29518",
-         "-m", "test.smoke_ddp_train"],
+         "-m", "tests.smoke_ddp_train"],
          capture_output=True, text=True, timeout=300
     )
     assert result_noddp.returncode == 0 and result_ddp.returncode == 0
@@ -74,7 +75,8 @@ def test_distributed_smoke_ddp():
     solo_loss = torch.load("tests/smoke_results/not_dist_grads.pt")["loss"]
     dist_loss_0 = torch.load("tests/smoke_results/dist_grads0.pt")["loss"]
     dist_loss_1 = torch.load("tests/smoke_results/dist_grads1.pt")["loss"]
-    assert torch.allclose(((dist_loss_0 + dist_loss_1) / 2), solo_loss, atol=1e-6)
+    dist_loss = (dist_loss_0 + dist_loss_1) / 2
+    assert math.isclose(dist_loss, solo_loss, rel_tol=1e-5)
 
 
 
