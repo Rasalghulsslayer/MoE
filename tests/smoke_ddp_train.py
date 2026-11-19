@@ -2,11 +2,9 @@
 from model.config import TEST
 import numpy as np
 import torch
-from pathlib import Path
-from utils.runtime import get_device, set_seed, setup_distributed, is_main_process
-from training.train_config import TrainConfig
+from utils.runtime import get_device, set_seed, setup_distributed
 from training.loop import train_step
-from training.dataset import load_tokens, make_sequences, get_batch_from_indices, sample_indices
+from training.dataset import load_tokens, make_sequences, get_batch_from_indices
 from model.transformer import Transformer
 
 if __name__ == "__main__":
@@ -23,7 +21,7 @@ if __name__ == "__main__":
 
     tokens = load_tokens(f"data/tokens/train_fr.bin")
     sequences = make_sequences(tokens, cfg.context_length)
-    x, y = get_batch_from_indices(sequences, [np.arange(dist[0] * 8, (dist[0] + 1) * 8 - 1)])
+    x, y = get_batch_from_indices(sequences, [np.arange(dist[0] * 8 + 1, (dist[0] + 1) * 8)])
 
     loss = train_step(model, x, y)
     

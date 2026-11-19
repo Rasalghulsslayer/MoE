@@ -52,10 +52,10 @@ def test_distributed_smoke_batches_change():
     assert len(sums) == 2, result.stdout          
     assert sums[0][1] != sums[1][1], result.stdout   
 
-def dest_distributed_smoke_ddp():
+def test_distributed_smoke_ddp():
     result_noddp = subprocess.run(
         [sys.executable, "-m", "torch.distributed.run",
-         "--nproc_per_node=2",
+         "--nproc_per_node=1",
          "--master-addr=127.0.0.1", "--master-port=29518",
          "-m", "tests.smoke_noddp_train"],
         capture_output=True, text=True, timeout=300
@@ -64,17 +64,17 @@ def dest_distributed_smoke_ddp():
         [sys.executable, "-m", "torch.distributed.run",
          "--nproc_per_node=2",
          "--master-addr=127.0.0.1", "--master-port=29518",
-         "-m", "test.smoke.ddp_train"],
+         "-m", "test.smoke_ddp_train"],
          capture_output=True, text=True, timeout=300
     )
     assert result_noddp.returncode == 0 and result_ddp.returncode == 0
     solo_grad = torch.load("tests/smoke_results/not_dist_grads.pt")["grads"]
     dist_grad = torch.load("tests/smoke_results/dist_grads0.pt")["grads"]
-    assert torch.allclose(solo_grad, dist_grad, atol=1e-6)
+    for a, b in zip(solo_grad, dist_grad): assert torch.allclose(a, b, atol=1e-6)
     solo_loss = torch.load("tests/smoke_results/not_dist_grads.pt")["loss"]
     dist_loss_0 = torch.load("tests/smoke_results/dist_grads0.pt")["loss"]
-    dist_loss_1 = torch.load("tests/smoke_results/dist_grads0.pt")["loss"]
-    assert ((dist_loss_0 + dist_loss_1) / 2) == solo_loss
+    dist_loss_1 = torch.load("tests/smoke_results/dist_grads1.pt")["loss"]
+    assert torch.allclose(((dist_loss_0 + dist_loss_1) / 2), solo_loss, atol=1e-6)
 
 
 

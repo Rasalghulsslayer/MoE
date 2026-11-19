@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     tokens = load_tokens(f"data/tokens/train_fr.bin")
     sequences = make_sequences(tokens, cfg.context_length)
-    x, y = get_batch_from_indices(sequences, [np.arange(0,15)])
+    x, y = get_batch_from_indices(sequences, [np.arange(0,16)])
 
     loss = train_step(model, x, y)
 
