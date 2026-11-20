@@ -17,9 +17,6 @@ if __name__ == "__main__":
     train_loss, val_loss, mean_t_step = train(cfg, schedule, B, n_steps, corpus, k=k, device_pref=device_pref)
 
     print(f"Temps moyen par step : {mean_t_step}")
-    if os.environ.get("RANK", "0") == "0":
-        plot_loss(train_loss, val_losses=val_loss)
-    
 
     train_loss_2, val_loss_2, mean_t_step_2 = train(cfg, schedule, B, 2 * n_steps, corpus, k=k, device_pref=device_pref, resume_from="latest.pt")
 
