@@ -2,7 +2,7 @@ import pytest
 import torch
 from utils.runtime import set_seed
 from model.moe import Router
-from model.config import TEST
+from model.config import TEST, TEST_E1_K1
 
 B, T = 4, 10
 
@@ -32,6 +32,6 @@ def test_router_props(x, cfg, router):
     router(x)[0].sum().backward()
     for _, p in router.named_parameters():
             assert p.grad is not None
-    router_bis = Router(cfg, 1, 1)
+    router_bis = Router(TEST_E1_K1)
     assert torch.all(router_bis(x)[0] == 1.0)
     assert torch.all(router_bis(x)[1] == 0)

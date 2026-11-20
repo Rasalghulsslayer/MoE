@@ -66,3 +66,15 @@ TEST= ModelConfig(
         context_length=64, 
         sliding_window=16
     )
+
+TEST_E1_K1= ModelConfig( 
+        d_model=32, 
+        n_layers=2, 
+        n_heads=4, 
+        n_kv_heads=2, 
+        n_experts=1,
+        top_k=1,
+        ffn_dim=64, 
+        context_length=64, 
+        sliding_window=16
+    )
