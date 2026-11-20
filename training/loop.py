@@ -31,8 +31,8 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
     dist = setup_distributed()
 
     if dist is not None:
-        device = get_device("cpu")
-    else :
+        device = get_device()
+    else:
         device = get_device(device_pref)
 
     first_batch = True

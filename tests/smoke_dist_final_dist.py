@@ -11,7 +11,7 @@ if __name__ == "__main__":
     B = 8
     k = 1
     n_steps = 12
-    device_pref = "cpu"
+    device_pref = None
     corpus = "fr"
     
     train_loss, val_loss, mean_t_step = train(cfg, schedule, B, n_steps, corpus, k=k, device_pref=device_pref)

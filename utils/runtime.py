@@ -22,8 +22,6 @@ def get_device(preference=None):
     elif preference is None: 
         if torch.cuda.is_available():
             device = torch.device("cuda")
-        elif torch.backends.mps.is_available():
-            device = torch.device("mps")
         else: 
             device = torch.device("cpu")
     else:
@@ -39,8 +37,8 @@ def setup_distributed():
     """Initialise le groupe de processus si lancé par torchrun, sinon rend None"""
     if "WORLD_SIZE" not in os.environ:
         return None
-    
-    dist.init_process_group(backend="gloo")
+
+    dist.init_process_group(backend="nccl" if torch.cuda.is_available() else "gloo")
     rank = int(os.environ["RANK"])
     world_size = int(os.environ["WORLD_SIZE"])
     return (rank, world_size)
