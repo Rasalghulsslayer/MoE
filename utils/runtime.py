@@ -33,12 +33,15 @@ def mem_mo() -> float:
     """Pic de mémoire du processus en Mo (ru_maxrss est en octet sur macOS)"""
     return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1e6
 
-def setup_distributed():
+def setup_distributed(preference=None):
     """Initialise le groupe de processus si lancé par torchrun, sinon rend None"""
     if "WORLD_SIZE" not in os.environ:
         return None
 
-    dist.init_process_group(backend="nccl" if torch.cuda.is_available() else "gloo")
+    use_cuda = (preference is None and torch.cuda.is_available()) or preference == "cuda"
+    dist.init_process_group(backend="nccl" if use_cuda else "gloo")
+    if use_cuda:
+        torch.cuda.set_device(int(os.environ["RANK"]))
     rank = int(os.environ["RANK"])
     world_size = int(os.environ["WORLD_SIZE"])
     return (rank, world_size)

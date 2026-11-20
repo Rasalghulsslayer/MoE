@@ -28,12 +28,8 @@ def train_step(model: Transformer, x: torch.Tensor, y: torch.Tensor, k: int = 1)
 def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int, corpus: str, k: int=1, device_pref=None, resume_from = None):
     """Boucle d'entrainement complète"""
 
-    dist = setup_distributed()
-
-    if dist is not None:
-        device = get_device()
-    else:
-        device = get_device(device_pref)
+    dist = setup_distributed(device_pref)
+    device = get_device(device_pref)
 
     first_batch = True
 

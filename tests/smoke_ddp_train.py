@@ -11,7 +11,7 @@ from model.transformer import Transformer
 if __name__ == "__main__":
     set_seed(42)
 
-    dist = setup_distributed()
+    dist = setup_distributed("cpu")
 
     cfg = TEST
 
