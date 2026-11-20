@@ -25,7 +25,7 @@ def test_router_props(x, cfg, router):
     assert router(x)[0].shape == (B, T, cfg.top_k)
     assert router(x)[1].shape == (B, T, cfg.top_k)
     assert torch.all(router(x)[0] > 0) and  torch.all(router(x)[0] <= 1) 
-    assert torch.allclose(torch.sum(router(x)[0], -1), torch.ones_like(B, T), atol=1e-6)
+    assert torch.allclose(torch.sum(router(x)[0], -1), torch.ones(B, T), atol=1e-6)
     for i in range (router.top_k): assert torch.all(0 < router(x)[1][...,i]) and torch.all(router(x)[1][...,i] <= cfg.n_experts - 1)
     for i in range (router.top_k):
         for j in range (i+1, router.top_k): assert torch.all(router(x)[1][...,i] != router(x)[1][...,j])
