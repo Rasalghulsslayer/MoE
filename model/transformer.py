@@ -5,6 +5,7 @@ from model.attention import Attention, KVCache
 from model.layers import RMSNorm, FeedForward
 from model.config import ModelConfig
 from model.rope import RotaryEmbedding
+from model.moe import MoE
 
 
 class TransformerBlock(nn.Module):
@@ -14,7 +15,7 @@ class TransformerBlock(nn.Module):
         self.input_layernorm = RMSNorm(cfg.d_model)
         self.self_attn = Attention(cfg)
         self.post_attention_layernorm = RMSNorm(cfg.d_model)
-        self.mlp = FeedForward(cfg)
+        self.mlp = FeedForward(cfg) if cfg.n_experts == 1 else MoE(cfg)
 
     def forward(self, x, cos, sin, cache=None):
         x_post_att = x + self.self_attn(self.input_layernorm(x), cos, sin, cache)
@@ -41,7 +42,6 @@ class Transformer(nn.Module):
         for name, p in self.named_parameters():
             if name.endswith("o_proj.weight") or name.endswith("down_proj.weight"): # Initialisation des couches écrivant dans le flux résiduel
                 nn.init.normal_(p, mean=0.0, std=residual_std)
-
         
     def _init_weights(self, module: nn.Module) -> None:
         """Loi normale (0, 0.02) pour toutes les couches linéaires et les embeddings"""
