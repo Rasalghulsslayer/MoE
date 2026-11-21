@@ -32,11 +32,17 @@ class MoE(nn.Module):
     def forward(self, x):
         cfg = self.cfg
         B, T, d_model = x.shape
-        x = x.view(B * T, d_model)
-        weights, index = self.router(x)
-        out = torch.zeros_like(x)
-        for i in range (B * T):
-            for j in range(cfg.top_k):
-                out[i] += weights[i,j] * self.experts[index[i,j]](x[i,:])
+        x_flat = x.view(B * T, d_model)
+        weights, index = self.router(x_flat)
+        weights_flat = weights.view(B * T * cfg.top_k)
+        index_flat = index.view(B * T * cfg.top_k)
+        lines = torch.arange(B*T).repeat_interleave(cfg.top_k)
+        out = torch.zeros_like(x_flat)
+        for e in range(cfg.n_experts):
+            mask = (index_flat == e)
+            if mask.any():
+                lines_e = lines[mask]
+                weights_e = weights_flat[mask]
+                out[lines_e] += weights_e.unsqueeze(-1) * self.experts[e](x_flat[lines_e])
         return out.view(B, T, d_model)
 
