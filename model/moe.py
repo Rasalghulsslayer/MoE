@@ -43,7 +43,7 @@ class MoE(nn.Module):
         self._f = f.detach()
         p = torch.mean(probs, dim=0)
         self.aux_loss = cfg.n_experts * torch.sum(f * p)
-        lines = torch.arange(B*T).repeat_interleave(cfg.top_k)
+        lines = torch.arange(B*T, device=x.device).repeat_interleave(cfg.top_k)
         out = torch.zeros_like(x_flat)
         for e in range(cfg.n_experts):
             mask = (index_flat == e)
