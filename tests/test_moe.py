@@ -74,6 +74,7 @@ def test_MoE_props(x, pre_x, y, cfg, moe):
     assert torch.allclose(moe_ff(x), ff(x), atol=1e-6)
     assert isinstance(TransformerBlock(TEST).mlp, MoE)
     assert isinstance(TransformerBlock(TEST_E1_K1).mlp, FeedForward)
+    set_seed(42)
     transformer = Transformer(TEST)
     _, loss = transformer(pre_x, y)
     assert loss is not None
@@ -98,8 +99,10 @@ def test_MoE_props(x, pre_x, y, cfg, moe):
         _ = moe_bis(x_bis)
     assert moe_bis.aux_loss > 1.5
     dataclasses.replace(TEST, aux_loss_coef=0.01)
-    transformer_bis = Transformer(TEST)
+    set_seed(42)
+    transformer_bis = Transformer(dataclasses.replace(TEST, aux_loss_coef=0.01))
     _, loss_alpha = transformer_bis(pre_x, y)
-    assert loss != loss_alpha
+    sum_aux = sum(layer.mlp.aux_loss for layer in transformer_bis.layers)
+    assert torch.allclose(loss_alpha - loss, sum_aux * 0.01, atol=1e-6)
 
     

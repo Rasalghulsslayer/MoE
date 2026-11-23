@@ -61,7 +61,7 @@ class Transformer(nn.Module):
         for i, layer in enumerate(self.layers):
             cache = caches[i] if caches is not None else None
             x = layer(x, cos, sin, cache)
-            aux_loss.append(layer.mlp.aux_loss) if layer.mlp is MoE else None
+            aux_loss.append(layer.mlp.aux_loss) if isinstance(layer.mlp, MoE) else None
         x = self.norm(x)
         logits = self.lm_head(x)
         loss = F.cross_entropy(logits.view(-1, self.cfg.vocab_size), targets.view(-1)) + self.cfg.aux_loss_coef * sum(aux_loss) if targets is not None else None
