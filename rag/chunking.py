@@ -1,23 +1,45 @@
 from tokenizer.tokenizer import decode
 
-def make_chunks(tokens: list, chunk_size: int, overlap: int, source: str, min_len: int) -> list:
+def make_chunks(tokens, chunk_size: int, overlap: int, source: str, min_len: int, id_start: int = 0) -> list:
+    
     chunks = []
+    merges = 0
     i = 0 
+
     while ((i+1) * (chunk_size - overlap) + chunk_size <= len(tokens)) :
+        ids = tokens[i * (chunk_size - overlap): i * (chunk_size - overlap) + chunk_size]
         chunk = {
-            "id": i,
+            "id": id_start + len(chunks),
             "source": source,
-            "token_ids": tokens[i * (chunk_size - overlap): i * (chunk_size - overlap) + chunk_size],
-            "text": decode(chunk["token_ids"])
+            "token_ids": ids,
+            "text": decode(ids)
         }
         chunks.append(chunk)
         i+=1
     if (len(tokens) - (i+1) * (chunk_size - overlap) < min_len):
-        chunks.append({"id": i, "source": source, "token_ids": tokens[i * (chunk_size - overlap):], "text": decode(chunk["token_ids"])})
+        ids = tokens[i * (chunk_size - overlap):]
+        chunks.append({
+            "id": id_start + len(chunks),
+            "source": source,
+            "token_ids": ids,
+            "text": decode(ids)
+        })
+        merges += 1
     else:
-        chunks.append({"id": i, "source": source, "token_ids": tokens[i * (chunk_size - overlap):i * (chunk_size - overlap) + chunk_size], "text": decode(chunk["token_ids"])})
-        chunks.append({"id": i+1, "source": source, "token_ids": tokens[(i+1) * (chunk_size - overlap):], "text": decode(chunk["token_ids"])})
-    return chunks
+        ids = tokens[i * (chunk_size - overlap):i * (chunk_size - overlap) + chunk_size]
+        chunks.append({
+                    "id": id_start + len(chunks),
+                    "source": source,
+                    "token_ids": ids,
+                    "text": decode(ids)
+                })
+        chunks.append({
+            "id": id_start + len(chunks),
+            "source": source,
+            "token_ids": ids,
+            "text": decode(ids)
+        }) 
+    return chunks, {"pass": len(chunks), "tokens": len(tokens), "merges": merges}
 
 
     

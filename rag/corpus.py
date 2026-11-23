@@ -1,50 +1,67 @@
-#Encodage du corpus pour ingestion du modèle.
+#Construction de la bibliothèque RAG : les splits de test (jamais vus par les gradients) deviennent des passages.
 import json
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
-import numpy as np
-
 from tokenizer.tokenizer import encode_document, load_tokenizer
+from tokenizer.special_tokens import BOS_ID, EOS_ID
+from rag.chunking import make_chunks
 
 TOKENIZER = Path("artifacts/tokenizer/fr_code_32k.json")
-CORPUS_DIR = Path("data/corpus")
+SPLIT_DIR = Path("data/splits")
 OUT_DIR = Path("rag/library")
-FLUSH_EVERY = 10_000_000  # nombre de tokens gardés en mémoire avant écriture
+
+CHUNK_SIZE, OVERLAP, MIN_LEN = 256, 32, 64
+SPLITS = ["test_fr", "test_code"]    
 
 
-def encode_rag_files(file: str, merges, pattern, cache: dict) -> dict:
-    """Encode un document en fichier binaire uint16."""
-    n_docs = n_tokens = n_bytes = 0
-    buffer = []
-    with open(CORPUS_DIR / f"{name}", encoding="utf-8") as src, \
-         open(OUT_DIR / f"{name}.bin", "wb") as dst:
-        for line in src:
-            text = json.loads(line)["text"]
-            buffer.extend(encode_document(text, merges, pattern, cache))
+def build_split(split: str, merges, pattern, cache: dict, out_f, id_next: int) -> tuple[dict, int]:
+    """Transforme un split jsonl en passages, écrits ligne à ligne dans out_f."""
+    n_docs = n_passages = n_tokens = n_fusions = 0
+    with open(SPLIT_DIR / f"{split}.jsonl", encoding="utf-8") as src:
+        for n_ligne, line in enumerate(src, start=1):
+            try:                                        # pipeline à soi : on asserte fort, fichier:ligne dans le message
+                doc = json.loads(line)
+                text = doc["text"]
+                doc_id, source, language = doc["id"], doc["source"], doc.get("language", "?")
+                if not text:
+                    raise KeyError("text vide")
+            except (json.JSONDecodeError, KeyError) as e:
+                raise ValueError(f"{split}.jsonl:{n_ligne} : document malformé ({e})") from e
+
+            ids = encode_document(text, merges, pattern, cache)
+            assert ids[0] == BOS_ID and ids[-1] == EOS_ID, "encode_document doit encadrer le texte de <s> et </s>"
+            ids = ids[1:-1]                             # le passage n'embarque pas ses délimiteurs de document
+
+            passages, stats = make_chunks(ids, CHUNK_SIZE, OVERLAP, source, MIN_LEN, id_start=id_next)
+            for p in passages:
+                out_f.write(json.dumps({"id": p["id"], "doc_id": doc_id, "source": source,
+                                        "language": language, "n_tokens": len(p["token_ids"]),
+                                        "text": p["text"]}, ensure_ascii=False) + "\n")
             n_docs += 1
-            n_bytes += len(text.encode("utf-8"))
-            if len(buffer) >= FLUSH_EVERY:
-                np.array(buffer, dtype=np.uint16).tofile(dst)
-                n_tokens += len(buffer)
-                buffer = []
-        np.array(buffer, dtype=np.uint16).tofile(dst)
-        n_tokens += len(buffer)
-    text_tokens = n_tokens - 2 * n_docs  # sans les <s> et </s>
-    return {"file": name, "docs": n_docs, "tokens": n_tokens,
-            "bytes_per_token": round(n_bytes / text_tokens, 3)}
+            n_passages += stats["passages"]
+            n_tokens += stats["tokens"]
+            n_fusions += stats["fusions"]
+            id_next += stats["passages"]
+    return {"split": split, "docs": n_docs, "passages": n_passages,
+            "tokens": n_tokens, "fusions": n_fusions}, id_next
 
 
 if __name__ == "__main__":
     merges, pattern, specials = load_tokenizer(TOKENIZER)
-    assert max(specials.values()) < 2**16, "Les ids ne tiennent pas en uint16"
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    cache = {}
-    results = []
-    corpus = []
-    for file in corpus:
-        t0 = time.perf_counter()
-        results.append(encode_rag_files(file, merges, pattern, cache))
-        print(results[-1], f"| {time.perf_counter() - t0:.0f} s", flush=True)
+    cache, results, id_next = {}, [], 0
+    with open(OUT_DIR / "library.jsonl", "w", encoding="utf-8") as out_f:   # une ligne = un passage
+        for split in SPLITS:
+            t0 = time.perf_counter()
+            stats, id_next = build_split(split, merges, pattern, cache, out_f, id_next)
+            results.append(stats)
+            print(stats, f"| {time.perf_counter() - t0:.0f} s", flush=True)
+
+    metadata = {"tokenizer": str(TOKENIZER), "chunk_size": CHUNK_SIZE, "overlap": OVERLAP,
+                "min_len": MIN_LEN, "splits": SPLITS, "regen": "uv run python -m rag.corpus",
+                "built_at": datetime.now(timezone.utc).isoformat(), "files": results}
     with open(OUT_DIR / "metadata.json", "w", encoding="utf-8") as f:
-        json.dump({"tokenizer": str(TOKENIZER), "files": results}, f, indent=2)
+        json.dump(metadata, f, indent=2)
+    print(f"Bibliothèque écrite : {len(results)} splits, {sum(r['passages'] for r in results)} passages.", flush=True)
