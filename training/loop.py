@@ -3,6 +3,7 @@ from tokenizer.tokenizer import load_tokenizer
 from model.config import ModelConfig, DEV
 from model.transformer import Transformer
 from model.generate import generate
+from model.moe import MoE
 from training.dataset import get_batch, make_sequences, load_tokens, sample_indices, get_batch_from_indices
 from training.schedule import get_lr
 from training.train_config import TrainConfig
@@ -133,6 +134,8 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
                 print(f"Perte d'entrainement actuelle : {train_loss[-1]}")
                 print(f"Temps d'entrainement du dernier micro-batch : {t_2 - t_step_beg} secondes")
                 print(f"Temps d'entrainement total : {t_2 - t_1} secondes")
+                if isinstance(model.layers[-1], MoE):
+                    print(f"MoE - aux {model.layers[-1].routing_stats()[0]}; charge max {model.layers[-1].routing_stats()[1]} / {1/cfg.n_experts}")
                 print("\n")
                 
                 save_checkpoint(i, raw_model, optimizer, scheduler, rng, train_loss, cfg, schedule, save_every=50)

@@ -98,11 +98,21 @@ def test_MoE_props(x, pre_x, y, cfg, moe):
         x_bis[...,0] = 1.0
         _ = moe_bis(x_bis)
     assert moe_bis.aux_loss > 1.5
-    dataclasses.replace(TEST, aux_loss_coef=0.01)
     set_seed(42)
     transformer_bis = Transformer(dataclasses.replace(TEST, aux_loss_coef=0.01))
     _, loss_alpha = transformer_bis(pre_x, y)
     sum_aux = sum(layer.mlp.aux_loss for layer in transformer_bis.layers)
     assert torch.allclose(loss_alpha - loss, sum_aux * 0.01, atol=1e-6)
+    moe_alpha= MoE(dataclasses.replace(TEST, aux_loss_coef=0.01))
+    _ = moe_alpha(x)
+    aux, f_max = moe_alpha.routing_stats()
+    assert isinstance(aux, float) and isinstance(f_max, float) 
+    assert abs(aux - moe_alpha.aux_loss.item()) < 1e-6
+    assert 1 / TEST.n_experts <= f_max <= 1.0 + 1e-9
+    _, f_max2 = moe_bis.routing_stats()
+    assert f_max2 == pytest.approx(0.5)
+    assert not hasattr(TransformerBlock(TEST_E1_K1).mlp, "routing_stats")
+
+
 
     
