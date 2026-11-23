@@ -56,6 +56,16 @@ DEV = ModelConfig(
     ffn_dim = 704,
     )
 
+DEV_MOE = ModelConfig(
+    d_model = 256,
+    n_layers = 4,
+    n_heads = 4,
+    n_kv_heads = 2, #GQA, si n_kv_heads = 1 : MQA
+    n_experts=8,
+    top_k=2,
+    ffn_dim = 704
+    )
+
 TEST= ModelConfig( 
         d_model=32, 
         n_layers=2, 
@@ -93,4 +103,5 @@ TEST_AUX= ModelConfig(
         context_length=64, 
         sliding_window=16
     )
+
 
