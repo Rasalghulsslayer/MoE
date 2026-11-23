@@ -81,3 +81,16 @@ TEST_E1_K1= ModelConfig(
         sliding_window=16
     )
 
+TEST_AUX= ModelConfig( 
+        d_model=32, 
+        n_layers=2, 
+        n_heads=4, 
+        n_kv_heads=2, 
+        n_experts=4,
+        top_k=2,
+        aux_loss_coef= 0.01,
+        ffn_dim=64, 
+        context_length=64, 
+        sliding_window=16
+    )
+

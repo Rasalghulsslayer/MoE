@@ -1,6 +1,6 @@
 from tokenizer.tokenizer import encode, decode, build_vocab
 from tokenizer.tokenizer import load_tokenizer
-from model.config import ModelConfig, DEV
+from model.config import ModelConfig, DEV, TEST_AUX
 from model.transformer import Transformer
 from model.generate import generate
 from model.moe import MoE
@@ -134,8 +134,11 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
                 print(f"Perte d'entrainement actuelle : {train_loss[-1]}")
                 print(f"Temps d'entrainement du dernier micro-batch : {t_2 - t_step_beg} secondes")
                 print(f"Temps d'entrainement total : {t_2 - t_1} secondes")
-                if isinstance(model.layers[-1], MoE):
-                    print(f"MoE - aux {model.layers[-1].routing_stats()[0]}; charge max {model.layers[-1].routing_stats()[1]} / {1/cfg.n_experts}")
+                if isinstance(raw_model.layers[-1].mlp, MoE):
+                    stats = [l.mlp.routing_stats() for l in raw_model.layers]
+                    aux_moy = sum(a for a,_ in stats) / len(stats)
+                    f_max = max(fm for _,fm in stats)
+                    print(f"MoE - aux {aux_moy:.2f}; charge max {f_max:.2f} / {1/cfg.n_experts:.2f}")
                 print("\n")
                 
                 save_checkpoint(i, raw_model, optimizer, scheduler, rng, train_loss, cfg, schedule, save_every=50)
@@ -206,18 +209,18 @@ def evaluate(model, sequences, n_batches, batch_size, device, rng=None):
 
 if __name__ == "__main__":
 
-    dist = setup_distributed()
-    print(dist)
-    if dist is not None:
-        torch.distributed.destroy_process_group()
+    # dist = setup_distributed()
+    # print(dist)
+    # if dist is not None:
+    #     torch.distributed.destroy_process_group()
 
-    # cfg = DEV
-    # schedule = TrainConfig()
-    # B = 40
-    # n_steps = 200
-    # corpus = "fr"
-    # train_loss, val_loss, _ = train(cfg, schedule, B, n_steps, corpus, k=4, device_pref="cpu")
-    # plot_loss(train_loss, val_losses=val_loss)
+    cfg = TEST_AUX
+    schedule = TrainConfig()
+    B = 40
+    n_steps = 200
+    corpus = "fr"
+    train_loss, val_loss, _ = train(cfg, schedule, B, n_steps, corpus, k=4, device_pref="cpu")
+    plot_loss(train_loss, val_losses=val_loss)
 
 
 
