@@ -5,7 +5,6 @@ import regex
 import json
 from pathlib import Path
 from tokenizer.the_regex import REGEX_PATTERN
-from tokenizer.tries.try_regex import GPT4_PATTERN
 from tokenizer.special_tokens import BOS_ID, EOS_ID 
 
 
