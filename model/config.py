@@ -10,6 +10,7 @@ class ModelConfig:
     n_kv_heads: int = 4
     n_experts: int = 1
     top_k: int = 1
+    aux_loss_coef: float = 0.01
     ffn_dim: int = 2048
     context_length: int = 1024
     sliding_window: int = 512
@@ -62,6 +63,7 @@ TEST= ModelConfig(
         n_kv_heads=2, 
         n_experts=4,
         top_k=2,
+        aux_loss_coef= 0,
         ffn_dim=64, 
         context_length=64, 
         sliding_window=16
@@ -78,3 +80,4 @@ TEST_E1_K1= ModelConfig(
         context_length=64, 
         sliding_window=16
     )
+

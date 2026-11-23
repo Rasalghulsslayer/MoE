@@ -51,6 +51,7 @@ class Transformer(nn.Module):
     def forward(self, idx: torch.Tensor, targets=None, caches=None):
 
         B, T = idx.shape
+        aux_loss = []
 
         start = caches[0].length if caches else 0
         assert start + T <= self.cfg.context_length, "Contexte trop long."
@@ -60,9 +61,10 @@ class Transformer(nn.Module):
         for i, layer in enumerate(self.layers):
             cache = caches[i] if caches is not None else None
             x = layer(x, cos, sin, cache)
+            aux_loss.append(layer.mlp.aux_loss) if layer.mlp is MoE else None
         x = self.norm(x)
         logits = self.lm_head(x)
-        loss = F.cross_entropy(logits.view(-1, self.cfg.vocab_size), targets.view(-1)) if targets is not None else None
+        loss = F.cross_entropy(logits.view(-1, self.cfg.vocab_size), targets.view(-1)) + self.cfg.aux_loss_coef * sum(aux_loss) if targets is not None else None
         return(logits, loss)
 
 

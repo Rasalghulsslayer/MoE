@@ -1,5 +1,6 @@
 import pytest
 import torch
+import dataclasses
 import torch.nn as nn
 from utils.runtime import set_seed
 from model.layers import FeedForward
@@ -56,7 +57,7 @@ def test_router_props(x, cfg, router):
 def moe_naive(moe, x, cfg):
     """Le MoE version 'je me fais pas chier' : E× le calcul, zéro ingénierie."""
     top_k, n_exp = cfg.top_k, cfg.n_experts
-    weights, indices = moe.router(x)                                   # même router, les mêmes choix
+    weights, indices, _ = moe.router(x)                                   # même router, les mêmes choix
     outs = torch.stack([expert(x) for expert in moe.experts])          # (E, B, T, d) : tout le monde calcule tout
     out = torch.zeros_like(x)
     for i in range(top_k):                                         # pour chaque position de choix i
@@ -75,8 +76,30 @@ def test_MoE_props(x, pre_x, y, cfg, moe):
     assert isinstance(TransformerBlock(TEST_E1_K1).mlp, FeedForward)
     transformer = Transformer(TEST)
     _, loss = transformer(pre_x, y)
-    print(transformer(pre_x, targets=y))
     assert loss is not None
     loss.backward()
     for p in transformer.parameters(): assert p.grad is not None
     assert count_params(cfg) == 1079712
+    moe_chi = MoE(TEST)
+    with torch.no_grad():
+        moe_chi.router.routing.weight.zero_()
+        _ = moe_chi(x)
+    assert abs(moe_chi.aux_loss - 1.0) < 1e-6
+    _ = moe(x)
+    moe.aux_loss.backward()
+    for p in moe.router.parameters(): assert p.grad is not None
+    set_seed(42)
+    moe_bis = MoE(TEST)
+    with torch.no_grad():
+        moe_bis.router.routing.weight.zero_()
+        moe_bis.router.routing.weight[0,0] = 10.0
+        x_bis = torch.zeros(B, T, TEST.d_model)
+        x_bis[...,0] = 1.0
+        _ = moe_bis(x_bis)
+    assert moe_bis.aux_loss > 1.5
+    dataclasses.replace(TEST, aux_loss_coef=0.01)
+    transformer_bis = Transformer(TEST)
+    _, loss_alpha = transformer_bis(pre_x, y)
+    assert loss != loss_alpha
+
+    

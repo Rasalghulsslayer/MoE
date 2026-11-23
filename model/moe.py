@@ -14,8 +14,9 @@ class Router(nn.Module):
 
     def forward(self, x):
         logits = self.routing(x)
+        probs = torch.softmax(logits, dim=-1)
         pre_weights, index = torch.topk(logits, self.top_k, dim=-1)
-        return (torch.softmax(pre_weights, dim=-1), index)
+        return (torch.softmax(pre_weights, dim=-1), index, probs)
 
 
 class MoE(nn.Module):
@@ -33,9 +34,12 @@ class MoE(nn.Module):
         cfg = self.cfg
         B, T, d_model = x.shape
         x_flat = x.view(B * T, d_model)
-        weights, index = self.router(x_flat)
+        weights, index, probs = self.router(x_flat)
         weights_flat = weights.view(B * T * cfg.top_k)
         index_flat = index.view(B * T * cfg.top_k)
+        f = torch.bincount(index_flat, minlength=cfg.n_experts) / (B * T * cfg.top_k)
+        p = torch.mean(probs, dim=0)
+        self.aux_loss = cfg.n_experts * torch.sum(f * p)
         lines = torch.arange(B*T).repeat_interleave(cfg.top_k)
         out = torch.zeros_like(x_flat)
         for e in range(cfg.n_experts):
