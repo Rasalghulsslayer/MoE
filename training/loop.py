@@ -141,7 +141,7 @@ def train(cfg: ModelConfig, schedule: TrainConfig, batch_size: int, n_steps: int
                     print(f"MoE - aux {aux_moy:.2f}; charge max {f_max:.2f} / {1/cfg.n_experts:.2f}")
                 print("\n")
                 
-                save_checkpoint(i, raw_model, optimizer, scheduler, rng, train_loss, cfg, schedule, save_every=50)
+                save_checkpoint(i, raw_model, optimizer, scheduler, rng, train_loss, cfg, schedule, save_every=250)
                 eval_every = 20
                 n_batches = 10
                 if i % eval_every == 0 or i  == (n_steps // k * k): #eval_every multiple de k
@@ -217,7 +217,7 @@ if __name__ == "__main__":
     cfg = TEST_AUX
     schedule = TrainConfig()
     B = 40
-    n_steps = 200
+    n_steps = schedule.max_steps
     corpus = "fr"
     train_loss, val_loss, _ = train(cfg, schedule, B, n_steps, corpus, k=4, device_pref="cpu")
     plot_loss(train_loss, val_losses=val_loss)
