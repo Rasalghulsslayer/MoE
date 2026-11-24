@@ -6,7 +6,7 @@ def make_chunks(tokens, vocab, chunk_size: int, overlap: int, source: str, min_l
     if not 0 <= overlap < chunk_size:
         raise ValueError("Découpage impossible.")
     if not tokens:
-        return [], {"passage": 0, "tokens": 0, "fusions": 0}
+        return [], {"passages": 0, "tokens": 0, "fusions": 0}
     
     chunks = []
     merges = 0
