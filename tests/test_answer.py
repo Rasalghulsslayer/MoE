@@ -36,5 +36,5 @@ def test_build_prompt(mini_index):
 
 def test_build_prompt_scale():
     question ="Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi les mouches n'ont elles pas de dents ?"
-    prompt = build_prompt(question, [1, 2, 3, 4], max_tokens=50)
+    prompt = build_prompt(question, [1, 2, 3, 4], max_char=50)
     assert len(prompt) == 50
