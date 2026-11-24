@@ -1,6 +1,7 @@
 from tokenizer.tokenizer import decode
 
-def make_chunks(tokens, chunk_size: int, overlap: int, source: str, min_len: int, id_start: int = 0) -> list:
+
+def make_chunks(tokens, vocab, chunk_size: int, overlap: int, source: str, min_len: int, id_start: int = 0) -> list:
 
     if not 0 <= overlap < chunk_size:
         raise ValueError("Découpage impossible.")
@@ -17,7 +18,7 @@ def make_chunks(tokens, chunk_size: int, overlap: int, source: str, min_len: int
             "id": id_start + len(chunks),
             "source": source,
             "token_ids": ids,
-            "text": decode(ids)
+            "text": decode(ids, vocab)
         }
         chunks.append(chunk)
         i+=1
@@ -28,7 +29,7 @@ def make_chunks(tokens, chunk_size: int, overlap: int, source: str, min_len: int
             "id": id_start + len(chunks),
             "source": source,
             "token_ids": ids,
-            "text": decode(ids)
+            "text": decode(ids, vocab)
         })
         merges += merge
     else:
@@ -37,14 +38,14 @@ def make_chunks(tokens, chunk_size: int, overlap: int, source: str, min_len: int
                     "id": id_start + len(chunks),
                     "source": source,
                     "token_ids": ids,
-                    "text": decode(ids)
+                    "text": decode(ids, vocab)
                 })
         ids = tokens[(i+1) * (chunk_size - overlap):]
         chunks.append({
             "id": id_start + len(chunks),
             "source": source,
             "token_ids": ids,
-            "text": decode(ids)
+            "text": decode(ids, vocab)
         }) 
     return chunks, {"passages": len(chunks), "tokens": len(tokens), "fusions": merges}
 

@@ -4,7 +4,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from tokenizer.tokenizer import encode_document, load_tokenizer
+from tokenizer.tokenizer import encode_document, load_tokenizer, build_vocab
 from tokenizer.special_tokens import BOS_ID, EOS_ID
 from rag.chunking import make_chunks
 
@@ -13,10 +13,10 @@ SPLIT_DIR = Path("data/splits")
 OUT_DIR = Path("rag/library")
 
 CHUNK_SIZE, OVERLAP, MIN_LEN = 256, 32, 64
-SPLITS = ["test_fr", "test_code"]    
+SPLITS = ["test_fr", "test_code"]  
 
 
-def build_split(split: str, merges, pattern, cache: dict, out_f, id_next: int) -> tuple[dict, int]:
+def build_split(split: str, merges, pattern, specials, cache: dict, out_f, id_next: int) -> tuple[dict, int]:
     """Transforme un split jsonl en passages, écrits ligne à ligne dans out_f."""
     n_docs = n_passages = n_tokens = n_fusions = 0
     with open(SPLIT_DIR / f"{split}.jsonl", encoding="utf-8") as src:
@@ -34,7 +34,8 @@ def build_split(split: str, merges, pattern, cache: dict, out_f, id_next: int) -
             assert ids[0] == BOS_ID and ids[-1] == EOS_ID, "encode_document doit encadrer le texte de <s> et </s>"
             ids = ids[1:-1]                             
 
-            passages, stats = make_chunks(ids, CHUNK_SIZE, OVERLAP, source, MIN_LEN, id_start=id_next)
+            vocab = build_vocab(merges, specials)
+            passages, stats = make_chunks(ids, vocab, CHUNK_SIZE, OVERLAP, source, MIN_LEN, id_start=id_next)
             for p in passages:
                 out_f.write(json.dumps({"id": p["id"], "doc_id": doc_id, "source": source,
                                         "language": language, "n_tokens": len(p["token_ids"]),
@@ -55,7 +56,7 @@ if __name__ == "__main__":
     with open(OUT_DIR / "library.jsonl", "w", encoding="utf-8") as out_f:   # une ligne = un passage
         for split in SPLITS:
             t0 = time.perf_counter()
-            stats, id_next = build_split(split, merges, pattern, cache, out_f, id_next)
+            stats, id_next = build_split(split, merges, pattern, specials, cache, out_f, id_next)
             results.append(stats)
             print(stats, f"| {time.perf_counter() - t0:.0f} s", flush=True)
 
