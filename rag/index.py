@@ -11,6 +11,8 @@ from rag.embedding import EMBED_DIM, EMBED_MODEL, embed
 LIBRARY = Path("rag/library/library.jsonl")
 INDEX = Path("rag/library/index.faiss")
 
+faiss.omp_set_num_threads(1)
+
 def build_index(library_path: Path = LIBRARY, index_path: Path = INDEX) -> int:
 
     texts, expected_id = [], 0
