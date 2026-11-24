@@ -83,9 +83,5 @@ if __name__ == "__main__":
     for i in range(len(passages)):
         print(f"{i}. passage: {passages[i]} | score : {search_results[i][1]}\n")
     print("\n")
-    print("\n")
-    print("\n")
-    print("\n")
-    print("\n")
-    print(f"Prompt final : \n {build_prompt(question, passages)} {answer(question)}" )
+    print(f"Prompt final : \n {answer(question)}" )
     
