@@ -50,7 +50,7 @@ def search(question: str, k: int = 5, index_path: Path = INDEX) -> list[tuple[in
 if __name__ == "__main__":
 
     build_index()
-    print("\nQuestion témoin :")
+    print("\nQuestion témoin : Comment écrire une fonction en Python ?")
     for passage_id, score in search("Comment écrire une fonction en Python ?", k=3):
         print(f" passage {passage_id} - score {score:.3f}")
 

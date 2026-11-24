@@ -4,7 +4,7 @@ import math
 from utils.runtime import set_seed
 from model.generate import generate, filter_top_p
 from model.transformer import Transformer
-from model.config import ModelConfig, TEST
+from model.config import TEST
 
 B = 2
 T = 5
