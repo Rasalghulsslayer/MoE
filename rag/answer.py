@@ -9,7 +9,7 @@ from model.generate import generate
 from utils.runtime import get_device
 from model.transformer import Transformer
 
-BUDGET = 512
+BUDGET = 3500
 MAX_NEW_TOKENS = 40
 CHECKPOINT = "latest.pt"
 TOKENIZER_PATH = Path("artifacts/tokenizer/fr_code_32k.json")

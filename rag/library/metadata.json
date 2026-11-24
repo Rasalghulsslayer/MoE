@@ -8,27 +8,29 @@
     "test_code"
   ],
   "regen": "uv run python -m rag.corpus",
-  "built_at": "2026-11-24T10:47:43.385096+00:00",
+  "built_at": "2026-11-24T20:51:04.152648+00:00",
   "files": [
     {
       "split": "test_fr",
       "docs": 1722,
-      "passages": 9739,
-      "tokens": 2044125,
-      "fusions": 134
+      "passages": 9538,
+      "tokens": 2252893,
+      "fusions": 134,
+      "exclus": 201
     },
     {
       "split": "test_code",
       "docs": 377,
-      "passages": 2371,
-      "tokens": 508887,
-      "fusions": 41
+      "passages": 2330,
+      "tokens": 562272,
+      "fusions": 41,
+      "exclus": 41
     }
   ],
   "index": {
     "model": "paraphrase-multilingual-MiniLM-L12-v2",
     "dim": 384,
-    "passages": 12110,
-    "built_at": "2026-11-24T15:42:38.438307+00:00"
+    "passages": 11868,
+    "built_at": "2026-11-24T20:52:05.320169+00:00"
   }
 }
