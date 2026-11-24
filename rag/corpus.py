@@ -32,7 +32,7 @@ def build_split(split: str, merges, pattern, cache: dict, out_f, id_next: int) -
 
             ids = encode_document(text, merges, pattern, cache)
             assert ids[0] == BOS_ID and ids[-1] == EOS_ID, "encode_document doit encadrer le texte de <s> et </s>"
-            ids = ids[1:-1]                             # le passage n'embarque pas ses délimiteurs de document
+            ids = ids[1:-1]                             
 
             passages, stats = make_chunks(ids, CHUNK_SIZE, OVERLAP, source, MIN_LEN, id_start=id_next)
             for p in passages:
