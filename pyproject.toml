@@ -10,8 +10,10 @@ requires-python = ">=3.11"
 dependencies = [
     "datasets>=5.1.0",
     "datetime>=6.0",
+    "faiss-cpu>=1.16.0",
     "regex>=2026.9.29",
     "seaborn>=0.13.2",
+    "sentence-transformers>=6.3.0",
     "torch>=2.15.0",
 ]
 

@@ -1,0 +1,28 @@
+{
+  "tokenizer": "artifacts/tokenizer/fr_code_32k.json",
+  "chunk_size": 256,
+  "overlap": 32,
+  "min_len": 64,
+  "splits": [
+    "test_fr",
+    "test_code"
+  ],
+  "regen": "uv run python -m rag.corpus",
+  "built_at": "2026-11-24T10:47:43.385096+00:00",
+  "files": [
+    {
+      "split": "test_fr",
+      "docs": 1722,
+      "passages": 9739,
+      "tokens": 2044125,
+      "fusions": 134
+    },
+    {
+      "split": "test_code",
+      "docs": 377,
+      "passages": 2371,
+      "tokens": 508887,
+      "fusions": 41
+    }
+  ]
+}
