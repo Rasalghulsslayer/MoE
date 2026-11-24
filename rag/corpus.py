@@ -19,6 +19,7 @@ SPLITS = ["test_fr", "test_code"]
 def build_split(split: str, merges, pattern, specials, cache: dict, out_f, id_next: int) -> tuple[dict, int]:
     """Transforme un split jsonl en passages, écrits ligne à ligne dans out_f."""
     n_docs = n_passages = n_tokens = n_fusions = 0
+    vocab = build_vocab(merges, specials)
     with open(SPLIT_DIR / f"{split}.jsonl", encoding="utf-8") as src:
         for n_ligne, line in enumerate(src, start=1):
             try:                                        # pipeline à soi : on asserte fort, fichier:ligne dans le message
@@ -34,7 +35,6 @@ def build_split(split: str, merges, pattern, specials, cache: dict, out_f, id_ne
             assert ids[0] == BOS_ID and ids[-1] == EOS_ID, "encode_document doit encadrer le texte de <s> et </s>"
             ids = ids[1:-1]                             
 
-            vocab = build_vocab(merges, specials)
             passages, stats = make_chunks(ids, vocab, CHUNK_SIZE, OVERLAP, source, MIN_LEN, id_start=id_next)
             for p in passages:
                 out_f.write(json.dumps({"id": p["id"], "doc_id": doc_id, "source": source,

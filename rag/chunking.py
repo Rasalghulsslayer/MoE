@@ -9,7 +9,7 @@ def make_chunks(tokens, vocab, chunk_size: int, overlap: int, source: str, min_l
         return [], {"passages": 0, "tokens": 0, "fusions": 0}
     
     chunks = []
-    merges = 0
+    fusions = 0
     i = 0 
 
     while ((i+1) * (chunk_size - overlap) + chunk_size <= len(tokens)) :
@@ -31,7 +31,7 @@ def make_chunks(tokens, vocab, chunk_size: int, overlap: int, source: str, min_l
             "token_ids": ids,
             "text": decode(ids, vocab)
         })
-        merges += merge
+        fusions += merge
     else:
         ids = tokens[i * (chunk_size - overlap):i * (chunk_size - overlap) + chunk_size]
         chunks.append({
@@ -47,7 +47,7 @@ def make_chunks(tokens, vocab, chunk_size: int, overlap: int, source: str, min_l
             "token_ids": ids,
             "text": decode(ids, vocab)
         }) 
-    return chunks, {"passages": len(chunks), "tokens": len(tokens), "fusions": merges}
+    return chunks, {"passages": len(chunks), "tokens": len(tokens), "fusions": fusions}
 
 
     

@@ -68,8 +68,6 @@ def test_documents_courts():
 def test_document_vide():
     chunks, stats = make_chunks([], VOCAB_TEST, CS, OV, "src", MN)
     assert chunks == []
-    print(stats)
-    print({"passages": 0, "tokens": 0, "fusions": 0})
     assert stats == {"passages": 0, "tokens": 0, "fusions": 0}
 
 
