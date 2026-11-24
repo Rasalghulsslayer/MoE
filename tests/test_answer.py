@@ -1,6 +1,6 @@
 import pytest
 import json
-from test_index import MINI_BIBLIOTHEQUE
+from tests.test_index import MINI_BIBLIOTHEQUE
 from rag.answer import get_passages, build_prompt, answer
 from rag.index import build_index
 
@@ -18,24 +18,34 @@ def mini_index(tmp_path):
     return library, index
 
 
-
-def test_get_passages():
+def test_get_passages(mini_index):
     ids = [2, 0]
     library, _ = mini_index
     assert get_passages(ids, library) == [MINI_BIBLIOTHEQUE[2], MINI_BIBLIOTHEQUE[0]]
 
-def test_build_prompt():
+def test_build_prompt(mini_index):
+    library, _ = mini_index
     question = "Pourquoi les mouches n'ont elles pas de dents ?"
-    prompt = build_prompt(question, [3,1])
+    passages = get_passages([3,1], library)
+    prompt = build_prompt(question, passages)
+    print(prompt)
     assert question in prompt
     assert MINI_BIBLIOTHEQUE[3] in prompt
     assert MINI_BIBLIOTHEQUE[1] in prompt
-    assert prompt == build_prompt(question, [3,1])
+    assert prompt == build_prompt(question, passages)
 
 def test_build_prompt_scale():
     question ="Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi les mouches n'ont elles pas de dents ?"
     prompt = build_prompt(question, [1, 2, 3, 4], max_tokens=50)
     assert len(prompt) == 50
 
-def test_answer():
-    
+
+def test_answer(mini_index):                            
+    library, index = mini_index
+    vu = {}
+
+    reponse = answer("Où se trouve la tour Eiffel ?", k=2, index_path=index,
+                     library_path=library)
+    assert "tour Eiffel" in vu["prompt"]                     
+    assert MINI_BIBLIOTHEQUE[0] in vu["prompt"]             
+    assert reponse == "réponse forgée"                      
