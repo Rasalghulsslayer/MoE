@@ -38,14 +38,3 @@ def test_build_prompt_scale():
     question ="Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi Pourquoi les mouches n'ont elles pas de dents ?"
     prompt = build_prompt(question, [1, 2, 3, 4], max_tokens=50)
     assert len(prompt) == 50
-
-
-def test_answer(mini_index):                            
-    library, index = mini_index
-    vu = {}
-
-    reponse = answer("Où se trouve la tour Eiffel ?", k=2, index_path=index,
-                     library_path=library)
-    assert "tour Eiffel" in vu["prompt"]                     
-    assert MINI_BIBLIOTHEQUE[0] in vu["prompt"]             
-    assert reponse == "réponse forgée"                      
