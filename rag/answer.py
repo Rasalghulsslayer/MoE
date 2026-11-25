@@ -16,7 +16,7 @@ TOKENIZER_PATH = Path("artifacts/tokenizer/fr_code_32k.json")
 
 @functools.cache
 def load_model():
-    data = load_checkpoint("latest.pt")
+    data = load_checkpoint(CHECKPOINT)
     model = Transformer(data["config"])
     model.load_state_dict(data["model"])
     model.to(get_device())
@@ -68,7 +68,7 @@ def answer(question: str, k: int = 3, library_path=LIBRARY, index_path=INDEX, ma
     device = next(model.parameters()).device
     entry = torch.tensor([tkzed_prompt], device=device)
     out = generate(model, entry, max_new_tokens, temperature=0.0)
-    return decode(out[0].tolist(), vocab).strip()
+    return decode(out[0][len(tkzed_prompt):].tolist(), vocab).strip()
 
 
 if __name__ == "__main__":
@@ -83,5 +83,5 @@ if __name__ == "__main__":
     for i in range(len(passages)):
         print(f"{i}. passage: {passages[i]} | score : {search_results[i][1]}\n")
     print("\n")
-    print(f"Prompt final : \n {answer(question)}" )
+    print(f"Réponse finale : \n {answer(question)}" )
     
