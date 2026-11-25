@@ -48,7 +48,7 @@ def hit_at_k(rangs: list[list[int]], attendus: list[int], k: int) -> float:
     for i in range (n):
         if attendus[i] in rangs[i][:k]:
             score += 1
-    return score/n
+    return score/n if n else 0.0
 
 
 
@@ -67,7 +67,7 @@ if __name__ == "__main__":
         for rank, score in result_search:
             ranks.append(rank)
         rangs.append(ranks)
-    print(f"hit@1: {hit_at_k(rangs, attendus, 1)}")
-    print(f"hit@3: {hit_at_k(rangs, attendus, 3)}")
-    print(f"hit@5: {hit_at_k(rangs, attendus, 5)}")
+    print(f"hit@1: {hit_at_k(rangs, attendus, 1)} ({hit_at_k(rangs, attendus, 1)*len(rangs)}/{len(rangs)})")
+    print(f"hit@3: {hit_at_k(rangs, attendus, 3)} ({hit_at_k(rangs, attendus, 3)*len(rangs)}/{len(rangs)})")
+    print(f"hit@5: {hit_at_k(rangs, attendus, 5)} ({hit_at_k(rangs, attendus, 5)*len(rangs)}/{len(rangs)})")
     
